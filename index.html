@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HCN工作台 - 精简版</title>
+    <title>物流工作台 - 精简版</title>
 
     <script src="https://cdn.jsdelivr.net/npm/lunar-javascript/lunar.js"></script>
     <script src="https://yubinbango.github.io/yubinbango/yubinbango.js" charset="UTF-8"></script>
@@ -36,7 +36,7 @@
         .result-title { font-weight: bold; margin-bottom: 4px; }
         .result-pref { color: #4a90e2; font-weight: bold; }
 
-        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 10px 20px; border-radius: 20px; z-index: 10000; opacity: 0; transition: 0.3s; pointer-events: none; font-size: 13px; }
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 10px 20px; border-radius: 20px; z-index: 1000; opacity: 0; transition: 0.3s; pointer-events: none; font-size: 13px; }
         .toast.show { opacity: 1; top: 30px; }
     </style>
 </head>
@@ -81,6 +81,17 @@
             <option value="NZD">NZD 纽元</option>
         </select>
         <div id="rate-status" style="margin-top:8px; font-size:12px; color:#999; text-align:center;">汇率加载中...</div>
+
+        <div style="margin:14px 0 6px; height:1px; background:#eee;"></div>
+        <div style="font-size:12px; color:#666; margin-bottom:6px;">日元 / 人民币 / 美金 联动</div>
+        <div style="display:flex; gap:8px; align-items:center; justify-content:center;">
+            <input type="number" id="val-jpy-link" value="1000" oninput="convertTriple('JPY')" style="flex:1; font-size:18px; text-align:center; border:1px solid #ddd; border-radius:8px; padding:8px;">
+            <div style="width:44px; text-align:center; font-size:12px; color:#666;">JPY</div>
+            <input type="number" id="val-cny-link" value="0" oninput="convertTriple('CNY')" style="flex:1; font-size:18px; text-align:center; border:1px solid #ddd; border-radius:8px; padding:8px;">
+            <div style="width:44px; text-align:center; font-size:12px; color:#666;">CNY</div>
+            <input type="number" id="val-usd-link" value="0" oninput="convertTriple('USD')" style="flex:1; font-size:18px; text-align:center; border:1px solid #ddd; border-radius:8px; padding:8px;">
+            <div style="width:44px; text-align:center; font-size:12px; color:#666;">USD</div>
+        </div>
     </div>
 </div>
 
@@ -208,6 +219,7 @@ async function initRates() {
                 rates = obj.rates;
                 setRateStatus('已加载缓存汇率');
                 convertRate('left');
+                convertTriple('JPY');
             }
         } catch (e) {}
     }
@@ -220,6 +232,7 @@ async function initRates() {
             localStorage.setItem('hcn_rates_cache', JSON.stringify({ ts: Date.now(), rates }));
             setRateStatus('汇率已更新');
             convertRate('left');
+            convertTriple('JPY');
         } else {
             setRateStatus('汇率数据异常');
         }
@@ -249,6 +262,36 @@ function convertRate(dir) {
 function setRateStatus(msg) {
     const el = document.getElementById('rate-status');
     if (el) el.innerText = msg;
+}
+
+function convertTriple(src) {
+    if(!rates.USD) {
+        setRateStatus('汇率未就绪，正在加载...');
+        initRates();
+        return;
+    }
+    const jpyInput = document.getElementById('val-jpy-link');
+    const cnyInput = document.getElementById('val-cny-link');
+    const usdInput = document.getElementById('val-usd-link');
+
+    let baseUsd = 0;
+    if (src === 'JPY') {
+        const v = parseFloat(jpyInput.value);
+        if (isNaN(v)) { cnyInput.value = ''; usdInput.value = ''; return; }
+        baseUsd = v / rates.JPY;
+    } else if (src === 'CNY') {
+        const v = parseFloat(cnyInput.value);
+        if (isNaN(v)) { jpyInput.value = ''; usdInput.value = ''; return; }
+        baseUsd = v / rates.CNY;
+    } else {
+        const v = parseFloat(usdInput.value);
+        if (isNaN(v)) { jpyInput.value = ''; cnyInput.value = ''; return; }
+        baseUsd = v / rates.USD;
+    }
+
+    if (src !== 'JPY') jpyInput.value = (baseUsd * rates.JPY).toFixed(2);
+    if (src !== 'CNY') cnyInput.value = (baseUsd * rates.CNY).toFixed(2);
+    if (src !== 'USD') usdInput.value = (baseUsd * rates.USD).toFixed(2);
 }
 
 // 农历日历
