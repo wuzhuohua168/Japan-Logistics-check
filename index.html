@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>亚马逊仓库、地址、柜型 查询系统</title>
+    <title>物流工作台 - 精简版</title>
 
     <script src="https://cdn.jsdelivr.net/npm/lunar-javascript/lunar.js"></script>
     <script src="https://yubinbango.github.io/yubinbango/yubinbango.js" charset="UTF-8"></script>
@@ -25,8 +25,17 @@
         input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; outline: none; background: #fff; }
 
         .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: #eee; }
-        .cal-cell { background: #fff; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 14px; position: relative; cursor: pointer; }
+        .cal-cell { background: #fff; height: 88px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 14px; position: relative; cursor: pointer; padding: 4px 2px; text-align: center; }
         .lunar-text { font-size: 10px; color: #999; margin-top: 2px; }
+        .holiday-text { font-size: 9px; margin-top: 2px; line-height: 1.2; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .holiday-jp { color: #d64541; font-weight: bold; }
+        .holiday-intl { color: #e67e22; font-weight: bold; }
+        .cal-cell-holiday-jp { background: #fff4f4; }
+        .cal-cell-holiday-intl { background: #fff9f1; }
+        .market-text { font-size: 9px; margin-top: 2px; line-height: 1.2; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: bold; }
+        .market-a { color: #1f6fb2; }
+        .market-us { color: #8e44ad; }
+        .market-us-early { color: #d35400; }
         .event-dot { position: absolute; bottom: 4px; width: 4px; height: 4px; background: #4a90e2; border-radius: 50%; }
         .today-circle { background: #4a90e2; color: #fff; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
 
@@ -35,8 +44,14 @@
         .result-item { padding: 10px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 8px; background: #fafafa; }
         .result-title { font-weight: bold; margin-bottom: 4px; }
         .result-pref { color: #4a90e2; font-weight: bold; }
+        .seg-btn { padding: 8px 10px; border: 1px solid #d5dce5; border-radius: 999px; background: #fff; color: #666; font-size: 12px; cursor: pointer; }
+        .seg-btn.active { background: #4a90e2; border-color: #4a90e2; color: #fff; }
+        .trend-wrap { margin-top: 14px; padding-top: 14px; border-top: 1px solid #eee; }
+        .trend-card { background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%); border: 1px solid #e4edf7; border-radius: 12px; padding: 12px; }
+        .trend-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: #666; margin-top: 8px; flex-wrap: wrap; }
+        #jpy-trend-canvas { width: 100%; height: 180px; display: block; }
 
-        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 10px 20px; border-radius: 20px; z-index: 10000; opacity: 0; transition: 0.3s; pointer-events: none; font-size: 13px; }
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 10px 20px; border-radius: 20px; z-index: 1000; opacity: 0; transition: 0.3s; pointer-events: none; font-size: 13px; }
         .toast.show { opacity: 1; top: 30px; }
     </style>
 </head>
@@ -81,6 +96,33 @@
             <option value="NZD">NZD 纽元</option>
         </select>
         <div id="rate-status" style="margin-top:8px; font-size:12px; color:#999; text-align:center;">汇率加载中...</div>
+
+        <div style="margin:14px 0 6px; height:1px; background:#eee;"></div>
+        <div style="font-size:12px; color:#666; margin-bottom:6px;">日元 / 人民币 / 美金 联动</div>
+        <div style="display:flex; gap:8px; align-items:center; justify-content:center;">
+            <input type="number" id="val-jpy-link" value="1000" oninput="convertTriple('JPY')" style="flex:1; font-size:18px; text-align:center; border:1px solid #ddd; border-radius:8px; padding:8px;">
+            <div style="width:44px; text-align:center; font-size:12px; color:#666;">JPY</div>
+            <input type="number" id="val-cny-link" value="0" oninput="convertTriple('CNY')" style="flex:1; font-size:18px; text-align:center; border:1px solid #ddd; border-radius:8px; padding:8px;">
+            <div style="width:44px; text-align:center; font-size:12px; color:#666;">CNY</div>
+            <input type="number" id="val-usd-link" value="0" oninput="convertTriple('USD')" style="flex:1; font-size:18px; text-align:center; border:1px solid #ddd; border-radius:8px; padding:8px;">
+            <div style="width:44px; text-align:center; font-size:12px; color:#666;">USD</div>
+        </div>
+
+        <div class="trend-wrap">
+            <div class="title" style="margin-bottom:12px;">日元兑人民币走势图</div>
+            <div style="display:flex; gap:8px; margin-bottom:10px;">
+                <button id="trend-btn-7" class="seg-btn" onclick="loadJpyTrend(7)">7天</button>
+                <button id="trend-btn-30" class="seg-btn active" onclick="loadJpyTrend(30)">30天</button>
+                <button id="trend-btn-90" class="seg-btn" onclick="loadJpyTrend(90)">90天</button>
+            </div>
+            <div class="trend-card">
+                <canvas id="jpy-trend-canvas" width="600" height="180"></canvas>
+                <div class="trend-meta">
+                    <div id="jpy-trend-status">走势图加载中...</div>
+                    <div id="jpy-trend-summary"></div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -91,30 +133,57 @@
             <div id="cal-month-title" style="font-weight:bold;"></div>
             <button onclick="changeMonth(1)" style="border:none; background:none; font-size:20px;">▶</button>
         </div>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; font-size:11px; color:#666; margin-bottom:10px;">
+            <div><span style="display:inline-block; width:10px; height:10px; background:#fff4f4; border:1px solid #f1cccc; border-radius:2px; vertical-align:middle; margin-right:4px;"></span>日本假期</div>
+            <div><span style="display:inline-block; width:10px; height:10px; background:#fff9f1; border:1px solid #f1ddc2; border-radius:2px; vertical-align:middle; margin-right:4px;"></span>国际节日</div>
+            <div><span style="display:inline-block; width:10px; height:10px; background:#1f6fb2; border-radius:2px; vertical-align:middle; margin-right:4px;"></span>A股休市</div>
+            <div><span style="display:inline-block; width:10px; height:10px; background:#8e44ad; border-radius:2px; vertical-align:middle; margin-right:4px;"></span>美股休市</div>
+            <div><span style="display:inline-block; width:10px; height:10px; background:#d35400; border-radius:2px; vertical-align:middle; margin-right:4px;"></span>美股提前收市</div>
+            <div><span style="display:inline-block; width:10px; height:10px; background:#4a90e2; border-radius:50%; vertical-align:middle; margin-right:4px;"></span>备注</div>
+        </div>
+        <div style="font-size:11px; color:#777; margin-bottom:10px; line-height:1.6;">
+            A股常规交易时间：09:30-11:30，13:00-15:00（北京时间）
+            <br>
+            美股常规交易时间：09:30-16:00（美东时间）；提前收市日通常 13:00 收市
+        </div>
         <div class="cal-grid" id="calendar-grid"></div>
     </div>
 </div>
 
 <div id="tab6" class="tab-content">
+    <div class="module-card">
+        <div class="title">🌏 国家/地区选择</div>
+        <div class="row">
+            <label>查询国家/地区</label>
+            <select id="country-select" onchange="changeCountry()">
+                <option value="JP" selected>日本 Japan</option>
+                <option value="KR">韩国 Korea</option>
+                <option value="SG">新加坡 Singapore</option>
+                <option value="US">美国 United States</option>
+            </select>
+        </div>
+    </div>
+
     <div class="module-card h-adr">
-        <div class="title">📮 日本地址查询 (邮编)</div>
+        <div class="title" id="address-title">📮 日本地址查询 (邮编)</div>
         <span class="p-country-name" style="display:none;">Japan</span>
         <div class="row">
-            <label>邮政区号 (7位数字自动查询)</label>
+            <label id="zip-label">邮政区号 (7位数字自动查询)</label>
             <input type="text" id="zip-jp" class="p-postal-code" placeholder="例：1000001">
         </div>
-        <div class="row"><label>地址详情</label>
-            <input type="text" id="region-jp" class="p-region" placeholder="都道府县" readonly>
-            <input type="text" id="locality-jp" class="p-locality" placeholder="市区町村" readonly>
-            <input type="text" id="street-jp" class="p-street-address" placeholder="街道">
+        <div class="row"><label id="address-detail-label">地址详情</label>
+            <input type="text" id="region-jp" class="p-region" placeholder="都道府县 / 州 / 城市" readonly>
+            <input type="text" id="locality-jp" class="p-locality" placeholder="市区町村 / 区域" readonly>
+            <input type="text" id="street-jp" class="p-street-address" placeholder="街道 / 详细地址">
         </div>
         <button class="btn-main" style="background:#27ae60; width:100%;" onclick="copyJpAddress()">复制完整地址</button>
+        <div id="zip-tip" style="margin-top:10px; font-size:12px; color:#999;">日本支持邮编自动回填；其他国家可输入邮编后点“查询”。</div>
     </div>
 
     <div class="module-card">
-        <div class="title">🔎 地址模糊查询 (都道府县)</div>
+        <div class="title" id="search-title">🔎 地址查询</div>
         <div class="row">
-            <label>地址关键词（可不完整）</label>
+            <label id="search-label">地址关键词（可不完整）</label>
             <input type="text" id="addr-query" placeholder="例：新宿 西新宿 2-8">
         </div>
         <div style="display:flex; gap:10px;">
@@ -140,12 +209,16 @@
         </div>
     </div>
 
+</div>
+
+<div id="tab7" class="tab-content">
     <div class="module-card">
         <div class="title">🚢 常用柜型参数</div>
         <div class="row" style="display:flex; gap:10px;">
             <input type="text" id="container-search" placeholder="搜索柜型/尺寸/备注" oninput="renderContainerTable()" style="flex:1;">
             <button class="btn-main" style="background:#4a90e2; width:120px;" onclick="toggleContainerLang()">中/EN</button>
         </div>
+        <div style="font-size:12px; color:#999; margin-bottom:10px;">已移到独立页，避免在地址页被遮挡。</div>
         <div style="overflow:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:12px;">
                 <thead>
@@ -163,6 +236,161 @@
                 <tbody id="container-table-body"></tbody>
             </table>
         </div>
+        <div style="margin-top:12px; padding:12px; background:#f8fbff; border:1px solid #dbe8f6; border-radius:8px; font-size:12px; line-height:1.8; color:#555;">
+            <div style="font-weight:bold; color:#2c3e50; margin-bottom:6px;">日本尾端派送车辆备注</div>
+            <div>2T车：最大载重 1.5 吨，最大装载量 8 立方米</div>
+            <div>4T车：最大载重 3 吨，最大装载量 15 立方米</div>
+            <div>10T车：最大载重 8.9 吨，最大装载量 30 立方米</div>
+        </div>
+
+        <div style="margin-top:12px; padding:12px; background:#fffdf7; border:1px solid #f0e3b8; border-radius:8px; font-size:12px; line-height:1.8; color:#555;">
+            <div style="font-weight:bold; color:#2c3e50; margin-bottom:8px;">主要船司介绍</div>
+            <div style="overflow:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                    <thead>
+                        <tr>
+                            <th style="background:#d6aa35; color:#fff; padding:8px; border:1px solid #ead59b;">船司</th>
+                            <th style="background:#d6aa35; color:#fff; padding:8px; border:1px solid #ead59b;">国家/地区</th>
+                            <th style="background:#d6aa35; color:#fff; padding:8px; border:1px solid #ead59b;">背后企业/股东</th>
+                            <th style="background:#d6aa35; color:#fff; padding:8px; border:1px solid #ead59b;">特点</th>
+                            <th style="background:#d6aa35; color:#fff; padding:8px; border:1px solid #ead59b;">免柜期参考</th>
+                            <th style="background:#d6aa35; color:#fff; padding:8px; border:1px solid #ead59b;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="shipping-table-body"></tbody>
+                </table>
+            </div>
+            <div style="margin-top:10px; font-size:12px; color:#777;">说明：免柜期为常见参考值，实际以航线、港口、箱型、合同和船司 tariff/订舱批复为准。</div>
+            <div style="margin-top:6px; font-size:12px; color:#777;">选择建议：如果优先看价格，可多比较 `MSC / EMC / HMM / ZIM`；如果优先看稳定和系统服务，可重点看 `Maersk / CMA CGM / Hapag-Lloyd / ONE / COSCO`。实际订舱仍建议结合 `目的港、直达/中转、免柜期、放舱节奏、截关时间` 一起判断。</div>
+        </div>
+    </div>
+</div>
+
+<div id="tab8" class="tab-content">
+    <div class="module-card">
+        <div class="title">🚚 中国常用货车参数</div>
+        <div style="font-size:12px; color:#999; margin-bottom:10px;">以下为行业常用参考值，适合做选车估算；具体以车型公告、车厢实测和当地限行为准。</div>
+        <div class="row" style="display:flex; gap:10px;">
+            <input type="text" id="truck-search" placeholder="搜索车型/尺寸/用途" oninput="renderTruckTable()" style="flex:1;">
+        </div>
+        <div style="overflow:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                <thead>
+                    <tr>
+                        <th style="background:#4aa36b; color:#fff; padding:8px; border:1px solid #d9e6cf;">车型</th>
+                        <th style="background:#4aa36b; color:#fff; padding:8px; border:1px solid #d9e6cf;">常用车厢尺寸 (长×宽×高)</th>
+                        <th style="background:#4aa36b; color:#fff; padding:8px; border:1px solid #d9e6cf;">参考方数</th>
+                        <th style="background:#4aa36b; color:#fff; padding:8px; border:1px solid #d9e6cf;">参考载重</th>
+                        <th style="background:#4aa36b; color:#fff; padding:8px; border:1px solid #d9e6cf;">常见用途</th>
+                        <th style="background:#4aa36b; color:#fff; padding:8px; border:1px solid #d9e6cf;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="truck-table-body"></tbody>
+            </table>
+        </div>
+        <div style="margin-top:12px; padding:12px; background:#f8fbff; border:1px solid #dbe8f6; border-radius:8px; font-size:12px; line-height:1.8; color:#555;">
+            <div style="font-weight:bold; color:#2c3e50; margin-bottom:6px;">备注</div>
+            <div>4.2米、5.2米、6.8米等参数主要用于物流行业常用选车口径，不等同于法规唯一标准。</div>
+            <div>法规层面的整车外廓尺寸、轴荷和质量限值，参考国家标准 GB 1589-2016。</div>
+            <div>方数受厢型影响较大：厢式、高栏、飞翼、平板会有差异。</div>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="title">🚛 日本常用货车参数</div>
+        <div style="font-size:12px; color:#999; margin-bottom:10px;">以下为日本物流常用车型参考值，适合尾端派送和干线选车估算；具体以车检证、厢体实测和道路限制为准。</div>
+        <div class="row" style="display:flex; gap:10px;">
+            <input type="text" id="jp-truck-search" placeholder="搜索日本车型/尺寸/用途" oninput="renderJpTruckTable()" style="flex:1;">
+        </div>
+        <div style="overflow:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                <thead>
+                    <tr>
+                        <th style="background:#4a7db8; color:#fff; padding:8px; border:1px solid #d9e6cf;">车型</th>
+                        <th style="background:#4a7db8; color:#fff; padding:8px; border:1px solid #d9e6cf;">常用车厢尺寸 (长×宽×高)</th>
+                        <th style="background:#4a7db8; color:#fff; padding:8px; border:1px solid #d9e6cf;">参考方数</th>
+                        <th style="background:#4a7db8; color:#fff; padding:8px; border:1px solid #d9e6cf;">参考载重</th>
+                        <th style="background:#4a7db8; color:#fff; padding:8px; border:1px solid #d9e6cf;">常见用途</th>
+                        <th style="background:#4a7db8; color:#fff; padding:8px; border:1px solid #d9e6cf;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="jp-truck-table-body"></tbody>
+            </table>
+        </div>
+        <div style="margin-top:12px; padding:12px; background:#f8fbff; border:1px solid #dbe8f6; border-radius:8px; font-size:12px; line-height:1.8; color:#555;">
+            <div style="font-weight:bold; color:#2c3e50; margin-bottom:6px;">备注</div>
+            <div>日本车型常按 `2T / 4T / 10T` 等吨位称呼，但实际有效载重和厢体尺寸会因品牌、厢型、是否冷藏/翼开而变化。</div>
+            <div>城市配送常见限高、限宽、时间窗限制，选车时建议同时核对收货仓和派送区域要求。</div>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="title">🇰🇷 韩国常用货车参数</div>
+        <div style="font-size:12px; color:#999; margin-bottom:10px;">以下为韩国物流常用车型参考值，常见于 1T、2.5T、5T 等口径；实际尺寸和可载货空间会随车斗/厢体形式变化。</div>
+        <div class="row" style="display:flex; gap:10px;">
+            <input type="text" id="kr-truck-search" placeholder="搜索韩国车型/尺寸/用途" oninput="renderKrTruckTable()" style="flex:1;">
+        </div>
+        <div style="overflow:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                <thead>
+                    <tr>
+                        <th style="background:#5f8fd1; color:#fff; padding:8px; border:1px solid #d9e6cf;">车型</th>
+                        <th style="background:#5f8fd1; color:#fff; padding:8px; border:1px solid #d9e6cf;">常用车厢尺寸 (长×宽×高)</th>
+                        <th style="background:#5f8fd1; color:#fff; padding:8px; border:1px solid #d9e6cf;">参考方数</th>
+                        <th style="background:#5f8fd1; color:#fff; padding:8px; border:1px solid #d9e6cf;">参考载重</th>
+                        <th style="background:#5f8fd1; color:#fff; padding:8px; border:1px solid #d9e6cf;">常见用途</th>
+                        <th style="background:#5f8fd1; color:#fff; padding:8px; border:1px solid #d9e6cf;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="kr-truck-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="title">🇸🇬 新加坡常用货车参数</div>
+        <div style="font-size:12px; color:#999; margin-bottom:10px;">新加坡市场常按 `10ft / 14ft / 24ft lorry` 分类；不同车队会按有无尾板、是否箱车再细分。</div>
+        <div class="row" style="display:flex; gap:10px;">
+            <input type="text" id="sg-truck-search" placeholder="搜索新加坡车型/尺寸/用途" oninput="renderSgTruckTable()" style="flex:1;">
+        </div>
+        <div style="overflow:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                <thead>
+                    <tr>
+                        <th style="background:#58a97d; color:#fff; padding:8px; border:1px solid #d9e6cf;">车型</th>
+                        <th style="background:#58a97d; color:#fff; padding:8px; border:1px solid #d9e6cf;">常用车厢尺寸 (长×宽×高)</th>
+                        <th style="background:#58a97d; color:#fff; padding:8px; border:1px solid #d9e6cf;">参考方数</th>
+                        <th style="background:#58a97d; color:#fff; padding:8px; border:1px solid #d9e6cf;">参考载重</th>
+                        <th style="background:#58a97d; color:#fff; padding:8px; border:1px solid #d9e6cf;">常见用途</th>
+                        <th style="background:#58a97d; color:#fff; padding:8px; border:1px solid #d9e6cf;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="sg-truck-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="title">🇺🇸 美国常用货车参数</div>
+        <div style="font-size:12px; color:#999; margin-bottom:10px;">美国常见 `Cargo Van / Box Truck / 53ft Trailer` 口径；不同租赁商和底盘品牌会有小幅差异。</div>
+        <div class="row" style="display:flex; gap:10px;">
+            <input type="text" id="us-truck-search" placeholder="搜索美国车型/尺寸/用途" oninput="renderUsTruckTable()" style="flex:1;">
+        </div>
+        <div style="overflow:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                <thead>
+                    <tr>
+                        <th style="background:#b85a5a; color:#fff; padding:8px; border:1px solid #d9e6cf;">车型</th>
+                        <th style="background:#b85a5a; color:#fff; padding:8px; border:1px solid #d9e6cf;">常用车厢尺寸 (长×宽×高)</th>
+                        <th style="background:#b85a5a; color:#fff; padding:8px; border:1px solid #d9e6cf;">参考方数</th>
+                        <th style="background:#b85a5a; color:#fff; padding:8px; border:1px solid #d9e6cf;">参考载重</th>
+                        <th style="background:#b85a5a; color:#fff; padding:8px; border:1px solid #d9e6cf;">常见用途</th>
+                        <th style="background:#b85a5a; color:#fff; padding:8px; border:1px solid #d9e6cf;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="us-truck-table-body"></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -170,12 +398,158 @@
     <div class="tab-item active" onclick="switchTab(3)"><span class="tab-icon">💴</span><span>汇率</span></div>
     <div class="tab-item" onclick="switchTab(4)"><span class="tab-icon">📅</span><span>日历</span></div>
     <div class="tab-item" onclick="switchTab(6)"><span class="tab-icon">📮</span><span>邮编</span></div>
+    <div class="tab-item" onclick="switchTab(7)"><span class="tab-icon">🚢</span><span>柜型</span></div>
+    <div class="tab-item" onclick="switchTab(8)"><span class="tab-icon">🚚</span><span>货车</span></div>
 </div>
 
 <div id="toast" class="toast">操作成功</div>
 
 <script>
 let currDate = new Date(), rates = {}, memos = JSON.parse(localStorage.getItem('hcn_calendar_memos') || '{}');
+let selectedCountry = 'JP';
+let trendDays = 30;
+let trendPoints = [];
+
+const TRUCK_DATA = [
+    { model: '面包车', size: '1.8 × 1.3 × 1.2 m', volume: '约 2-3 m3', weight: '约 0.5 吨', usage: '同城小件、急件、样品件' },
+    { model: '依维柯 / 小型厢车', size: '2.5 × 1.5 × 1.5 m', volume: '约 5-6 m3', weight: '约 1 吨', usage: '城市配送、小批量门店补货' },
+    { model: '2.7米厢车', size: '2.7 × 1.5 × 1.7 m', volume: '约 6-7 m3', weight: '约 1 吨', usage: '短途配送、家电百货' },
+    { model: '3.3米厢车', size: '3.3 × 1.7 × 1.7 m', volume: '约 9-10 m3', weight: '约 1.5 吨', usage: '同城配送、小型搬运' },
+    { model: '3.8米厢车', size: '3.8 × 1.8 × 1.8 m', volume: '约 12-13 m3', weight: '约 1.5-2 吨', usage: '中短途配送、零担拼货' },
+    { model: '4.2米厢车', size: '4.2 × 1.9 × 1.9 m', volume: '约 15 m3', weight: '约 1.5-2 吨', usage: '城市配送、电商件、小批量零担' },
+    { model: '5.2米厢车', size: '5.2 × 2.1 × 2.1 m', volume: '约 22-24 m3', weight: '约 3-5 吨', usage: '中短途零担、工厂配送' },
+    { model: '6.8米高栏/厢车', size: '6.8 × 2.3 × 2.4 m', volume: '约 35-38 m3', weight: '约 8-10 吨', usage: '专线常用、中型普货' },
+    { model: '7.6米高栏/厢车', size: '7.6 × 2.3 × 2.5 m', volume: '约 43-45 m3', weight: '约 8-12 吨', usage: '中长途普货、轻泡货' },
+    { model: '8.7米高栏/厢车', size: '8.7 × 2.35 × 2.5 m', volume: '约 50-55 m3', weight: '约 10-15 吨', usage: '区域干线、整车运输' },
+    { model: '9.6米高栏/厢车', size: '9.6 × 2.35 × 2.5 m', volume: '约 56-60 m3', weight: '约 12-18 吨', usage: '干线运输、重泡货兼顾' },
+    { model: '13米半挂', size: '13.0 × 2.4 × 2.6 m', volume: '约 80-85 m3', weight: '约 30-32 吨', usage: '长途干线、大票普货' },
+    { model: '17.5米大板', size: '17.5 × 2.8 × 3.0 m', volume: '约 130-140 m3', weight: '约 28-32 吨', usage: '轻泡货、大件货、超长货' }
+];
+
+const JP_TRUCK_DATA = [
+    { model: '轻四轮 Van', size: '1.8 × 1.3 × 1.2 m', volume: '约 2-3 m3', weight: '约 0.35 吨', usage: '市内急送、小件配送' },
+    { model: '1T Van', size: '2.2 × 1.5 × 1.3 m', volume: '约 4-5 m3', weight: '约 1 吨', usage: '门店补货、小批量配送' },
+    { model: '2T 平车/厢车', size: '3.1 × 1.6 × 1.7 m', volume: '约 8 m3', weight: '约 1.5 吨', usage: '尾端派送、家具家电' },
+    { model: '3T 厢车', size: '4.2 × 1.8 × 1.9 m', volume: '约 12-14 m3', weight: '约 2-3 吨', usage: '区域配送、中小批量货物' },
+    { model: '4T 平车/厢车', size: '6.2 × 2.1 × 2.2 m', volume: '约 15 m3', weight: '约 3 吨', usage: '日本尾端干线衔接、常规普货' },
+    { model: '6T 厢车', size: '6.5 × 2.2 × 2.3 m', volume: '约 20-24 m3', weight: '约 6 吨', usage: '中距干线、整托运输' },
+    { model: '10T 大型车', size: '9.6 × 2.35 × 2.6 m', volume: '约 30 m3', weight: '约 8.9 吨', usage: '长途干线、大批量整车' },
+    { model: '13T Wing 车', size: '9.6 × 2.4 × 2.6 m', volume: '约 30-32 m3', weight: '约 13 吨', usage: '托盘货、装卸效率优先' }
+];
+
+const KR_TRUCK_DATA = [
+    { model: '1T Truck', size: '2.8 × 1.6 × 1.6 m', volume: '约 7 m3', weight: '约 1 吨', usage: '市内配送、小型商业补货' },
+    { model: '1.4T Truck', size: '3.1 × 1.7 × 1.7 m', volume: '约 9 m3', weight: '约 1.4 吨', usage: '短途配送、建材零担' },
+    { model: '2.5T Truck', size: '4.3 × 2.0 × 2.0 m', volume: '约 17 m3', weight: '约 2.5 吨', usage: '区域配送、中小批量货物' },
+    { model: '3.5T Truck', size: '4.8 × 2.1 × 2.1 m', volume: '约 21 m3', weight: '约 3.5 吨', usage: '城市到区域中转' },
+    { model: '5T Truck', size: '6.2 × 2.3 × 2.3 m', volume: '约 32 m3', weight: '约 5 吨', usage: '干线普货、托盘货' },
+    { model: '8T Truck', size: '8.5 × 2.35 × 2.4 m', volume: '约 48 m3', weight: '约 8 吨', usage: '长途干线、大宗货物' },
+    { model: '11T Wing Body', size: '9.6 × 2.4 × 2.5 m', volume: '约 57 m3', weight: '约 11 吨', usage: '托盘货、快速装卸' }
+];
+
+const SG_TRUCK_DATA = [
+    { model: '10ft Lorry', size: '3.1 × 1.55 × 1.9 m', volume: '约 5.6-8.5 m3', weight: '约 1-1.5 吨', usage: '最后一公里、住宅配送' },
+    { model: '14ft Lorry', size: '4.26 × 1.9 × 2.1 m', volume: '约 11.3-14.2 m3', weight: '约 2-3 吨', usage: '商业配送、搬家、门店补货' },
+    { model: '24ft Lorry', size: '7.4 × 2.4 × 2.3 m', volume: '约 19.8-25.5 m3', weight: '约 4-9 吨', usage: '仓到仓、大宗工业货物' },
+    { model: '10ft Tailgate Truck', size: '3.1 × 1.55 × 1.9 m', volume: '约 6-8 m3', weight: '约 1 吨', usage: '需要尾板的市区配送' },
+    { model: '14ft Box Truck', size: '4.26 × 1.9 × 2.1 m', volume: '约 12-15 m3', weight: '约 3 吨', usage: '带箱防雨配送、零售补货' }
+];
+
+const US_TRUCK_DATA = [
+    { model: 'Cargo Van', size: '3.0 × 1.7 × 1.7 m', volume: '约 8-10 m3', weight: '约 0.7-1.5 吨', usage: '同城配送、快件、工具车' },
+    { model: '16ft Box Truck', size: '4.9 × 2.44 × 2.29 m', volume: '约 27 m3 / 960 cu ft', weight: '约 3.4 吨 / 7,500 lbs', usage: '中小搬家、商业配送' },
+    { model: '20ft Box Truck', size: '6.1 × 2.5 × 2.5 m', volume: '约 43-46 m3 / 1,500-1,600 cu ft', weight: '约 4.5 吨 / 10,000 lbs', usage: '中型搬家、区域配送' },
+    { model: '24ft Box Truck', size: '7.3 × 2.59 × 2.59 m', volume: '约 42-48 m3 / 1,500-1,700 cu ft', weight: '约 4.5 吨 / 10,000 lbs', usage: '仓配、重货搬运' },
+    { model: '26ft Box Truck', size: '7.9 × 2.59 × 2.59 m', volume: '约 48-51 m3 / 1,700-1,800 cu ft', weight: '约 4.5 吨 / 10,000 lbs', usage: '大型搬家、区域干线' },
+    { model: '53ft Trailer', size: '16.15 × 2.59 × 2.8 m', volume: '约 90-100 m3 / 3,200-3,500 cu ft', weight: '约 20-22 吨', usage: '长途整车、干线运输' }
+];
+
+const SHIPPING_DATA = [
+    {
+        name: '地中海航运 / MSC / Mediterranean Shipping Company',
+        country: '瑞士',
+        background: 'Aponte 家族控制的全球班轮集团',
+        feature: '全球舱位体量大，航线覆盖广，适合常规大宗订舱',
+        freeTime: '干柜常见 5-10 天，部分航线可谈到 10-14 天'
+    },
+    {
+        name: '马士基 / Maersk / A.P. Moller - Maersk',
+        country: '丹麦',
+        background: 'A.P. Moller 集团体系，母集团为 A.P. Moller Holding',
+        feature: '服务体系成熟，数字化和可视化较强',
+        freeTime: '干柜常见 5-7 天，优质客户或指定项目可延长'
+    },
+    {
+        name: '达飞轮船 / CMA CGM / CMA CGM Group',
+        country: '法国',
+        background: 'Saadé 家族控制的班轮集团',
+        feature: '欧美、地中海、非洲等航线布局强',
+        freeTime: '干柜常见 5-10 天，个别市场可更长'
+    },
+    {
+        name: '中远海运 / COSCO Shipping Lines',
+        country: '中国',
+        background: '中国远洋海运集团体系',
+        feature: '中国出运资源强，亚洲及美线布局成熟',
+        freeTime: '干柜常见 7-10 天，协议客户有时可争取更长'
+    },
+    {
+        name: '东方海外 / OOCL / Orient Overseas Container Line',
+        country: '中国香港',
+        background: '东方海外（国际）及中远海运体系',
+        feature: '系统成熟，亚洲和跨太平洋线较常见',
+        freeTime: '干柜常见 7-10 天'
+    },
+    {
+        name: '海洋网联船务 / ONE / Ocean Network Express',
+        country: '总部新加坡，日本背景',
+        background: '股东为 NYK、MOL、K Line',
+        feature: '日本相关航线和跨太平洋航线配载常见',
+        freeTime: '干柜常见 5-7 天，日本相关线和协议客户可到 7-10 天'
+    },
+    {
+        name: '赫伯罗特 / Hapag-Lloyd / Hapag-Lloyd AG',
+        country: '德国',
+        background: '德国班轮公司，长期有 Kühne Maritime 等资本支持',
+        feature: '欧洲、跨大西洋和部分美线稳定',
+        freeTime: '干柜常见 5-7 天，部分项目可延长'
+    },
+    {
+        name: '长荣海运 / Evergreen / Evergreen Marine Corporation',
+        country: '中国台湾',
+        background: '长荣集团体系',
+        feature: '亚洲和美线活跃，价格和舱位较有竞争力',
+        freeTime: '干柜常见 7-10 天，旺季和紧张港口会收紧'
+    },
+    {
+        name: '现代商船 / HMM / HMM Co., Ltd.',
+        country: '韩国',
+        background: '长期由韩国产业银行等政策性资本支持',
+        feature: '韩系主力班轮公司，东北亚和美线有一定优势',
+        freeTime: '干柜常见 7-10 天，东北亚区域有时较灵活'
+    },
+    {
+        name: '太平船务 / PIL / Pacific International Lines',
+        country: '新加坡',
+        background: '新加坡老牌航运集团',
+        feature: '东南亚、南亚、中东、非洲等航线布局常见',
+        freeTime: '东南亚区域常见 7-14 天'
+    },
+    {
+        name: '美森轮船 / Matson / Matson, Inc.',
+        country: '美国',
+        background: '美国上市航运物流集团，运营主体 Matson Navigation Company',
+        feature: '美线时效型代表船司之一',
+        freeTime: '美线快船和美西港口多见 3-7 天'
+    },
+    {
+        name: '以星航运 / ZIM / ZIM Integrated Shipping Services',
+        country: '以色列',
+        background: '以色列班轮公司，纽交所上市',
+        feature: '灵活度较高，部分航线速度有优势',
+        freeTime: '干柜常见 5-7 天，快线产品通常更短'
+    }
+];
 
 const PREFS = [
     '北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県',
@@ -187,15 +561,25 @@ const PREFS = [
     '福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県'
 ];
 
-window.onload = () => { initRates(); renderContainerTable(); };
+window.onload = () => { initRates(); renderContainerTable(); renderShippingTable(); renderTruckTable(); renderJpTruckTable(); renderKrTruckTable(); renderSgTruckTable(); renderUsTruckTable(); changeCountry(); loadJpyTrend(30); };
 
 function switchTab(idx) {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.querySelectorAll('.tab-item').forEach(i => i.classList.remove('active'));
     document.getElementById('tab' + idx).classList.add('active');
-    const order = {3: 0, 4: 1, 6: 2};
+    const order = {3: 0, 4: 1, 6: 2, 7: 3, 8: 4};
     document.querySelectorAll('.tab-item')[order[idx]].classList.add('active');
     if(idx === 4) initCalendar();
+    if(idx === 7) renderContainerTable();
+    if(idx === 7) renderShippingTable();
+    if(idx === 8) {
+        renderTruckTable();
+        renderJpTruckTable();
+        renderKrTruckTable();
+        renderSgTruckTable();
+        renderUsTruckTable();
+    }
+    if(idx === 3 && !trendPoints.length) loadJpyTrend(trendDays);
 }
 
 // 汇率转换功能
@@ -208,6 +592,7 @@ async function initRates() {
                 rates = obj.rates;
                 setRateStatus('已加载缓存汇率');
                 convertRate('left');
+                convertTriple('JPY');
             }
         } catch (e) {}
     }
@@ -220,6 +605,7 @@ async function initRates() {
             localStorage.setItem('hcn_rates_cache', JSON.stringify({ ts: Date.now(), rates }));
             setRateStatus('汇率已更新');
             convertRate('left');
+            convertTriple('JPY');
         } else {
             setRateStatus('汇率数据异常');
         }
@@ -251,6 +637,180 @@ function setRateStatus(msg) {
     if (el) el.innerText = msg;
 }
 
+function convertTriple(src) {
+    if(!rates.USD) {
+        setRateStatus('汇率未就绪，正在加载...');
+        initRates();
+        return;
+    }
+    const jpyInput = document.getElementById('val-jpy-link');
+    const cnyInput = document.getElementById('val-cny-link');
+    const usdInput = document.getElementById('val-usd-link');
+
+    let baseUsd = 0;
+    if (src === 'JPY') {
+        const v = parseFloat(jpyInput.value);
+        if (isNaN(v)) { cnyInput.value = ''; usdInput.value = ''; return; }
+        baseUsd = v / rates.JPY;
+    } else if (src === 'CNY') {
+        const v = parseFloat(cnyInput.value);
+        if (isNaN(v)) { jpyInput.value = ''; usdInput.value = ''; return; }
+        baseUsd = v / rates.CNY;
+    } else {
+        const v = parseFloat(usdInput.value);
+        if (isNaN(v)) { jpyInput.value = ''; cnyInput.value = ''; return; }
+        baseUsd = v / rates.USD;
+    }
+
+    if (src !== 'JPY') jpyInput.value = (baseUsd * rates.JPY).toFixed(2);
+    if (src !== 'CNY') cnyInput.value = (baseUsd * rates.CNY).toFixed(2);
+    if (src !== 'USD') usdInput.value = (baseUsd * rates.USD).toFixed(2);
+}
+
+async function loadJpyTrend(days) {
+    trendDays = days;
+    updateTrendButtons(days);
+    setJpyTrendStatus('走势图加载中...');
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - days + 1);
+    const startStr = formatDate(start);
+    const endStr = formatDate(end);
+
+    try {
+        const url = `https://api.frankfurter.dev/v2/rates?from=${startStr}&to=${endStr}&base=JPY&quotes=CNY`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!Array.isArray(data)) throw new Error('invalid trend data');
+        trendPoints = data
+            .filter(item => item && item.quote === 'CNY' && typeof item.rate === 'number')
+            .map(item => ({ date: item.date, value: item.rate }))
+            .sort((a, b) => a.date.localeCompare(b.date));
+
+        if (!trendPoints.length) throw new Error('empty trend data');
+        drawJpyTrendChart(trendPoints);
+        updateTrendSummary(trendPoints);
+        setJpyTrendStatus(`近${days}天 JPY/CNY 历史汇率`);
+    } catch (e) {
+        trendPoints = [];
+        clearTrendCanvas();
+        setJpyTrendStatus('走势图加载失败');
+        document.getElementById('jpy-trend-summary').innerText = '历史汇率接口暂不可用';
+    }
+}
+
+function updateTrendButtons(days) {
+    [7, 30, 90].forEach(item => {
+        const btn = document.getElementById(`trend-btn-${item}`);
+        if (btn) btn.classList.toggle('active', item === days);
+    });
+}
+
+function setJpyTrendStatus(text) {
+    const el = document.getElementById('jpy-trend-status');
+    if (el) el.innerText = text;
+}
+
+function updateTrendSummary(points) {
+    const values = points.map(item => item.value);
+    const latest = values[values.length - 1];
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const first = values[0];
+    const change = latest - first;
+    const changeText = `${change >= 0 ? '+' : ''}${change.toFixed(4)}`;
+    document.getElementById('jpy-trend-summary').innerText = `最新 ${latest.toFixed(4)} | 区间 ${min.toFixed(4)}-${max.toFixed(4)} | 变化 ${changeText}`;
+}
+
+function clearTrendCanvas() {
+    const canvas = document.getElementById('jpy-trend-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawJpyTrendChart(points) {
+    const canvas = document.getElementById('jpy-trend-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const cssWidth = canvas.clientWidth || 600;
+    const cssHeight = 180;
+    canvas.width = cssWidth * dpr;
+    canvas.height = cssHeight * dpr;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, cssWidth, cssHeight);
+
+    const padding = { top: 14, right: 44, bottom: 26, left: 42 };
+    const width = cssWidth - padding.left - padding.right;
+    const height = cssHeight - padding.top - padding.bottom;
+    const values = points.map(item => item.value);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min || 0.0001;
+
+    ctx.fillStyle = '#7a8a99';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i <= 3; i++) {
+        const y = padding.top + (height / 3) * i;
+        const val = max - (range / 3) * i;
+        ctx.fillText(val.toFixed(4), padding.left - 6, y);
+    }
+
+    ctx.strokeStyle = '#e6edf5';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 3; i++) {
+        const y = padding.top + (height / 3) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(padding.left + width, y);
+        ctx.stroke();
+    }
+
+    ctx.beginPath();
+    points.forEach((point, index) => {
+        const x = padding.left + (width * index) / Math.max(points.length - 1, 1);
+        const y = padding.top + height - ((point.value - min) / range) * height;
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = '#4a90e2';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    const lastPoint = points[points.length - 1];
+    const lastX = padding.left + width;
+    const lastY = padding.top + height - ((lastPoint.value - min) / range) * height;
+    ctx.fillStyle = '#4a90e2';
+    ctx.beginPath();
+    ctx.arc(lastX, lastY, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#4a90e2';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(lastPoint.value.toFixed(4), lastX + 6, lastY);
+
+    ctx.fillStyle = '#7a8a99';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(points[0].date.slice(5), padding.left, cssHeight - 8);
+    ctx.textAlign = 'right';
+    ctx.fillText(lastPoint.date.slice(5), padding.left + width, cssHeight - 8);
+}
+
+function formatDate(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
 // 农历日历
 function initCalendar() {
     const grid = document.getElementById('calendar-grid'); grid.innerHTML = '';
@@ -263,10 +823,24 @@ function initCalendar() {
         const key = `${year}-${month+1}-${d}`,
               isToday = new Date().toDateString() === new Date(year, month, d).toDateString();
         const lunarDate = Lunar.fromDate(new Date(year, month, d));
+        const holiday = getHolidayInfo(year, month + 1, d);
+        const marketClosures = getMarketClosures(year, month + 1, d);
         const cell = document.createElement('div'); cell.className = 'cal-cell';
-        cell.innerHTML = `${isToday?'<div class="today-circle">'+d+'</div>':d}<div class="lunar-text">${lunarDate.getJieQi() || lunarDate.getDayInChinese()}</div>${memos[key]?'<div class="event-dot"></div>':''}`;
+        if (holiday?.type === 'jp') cell.classList.add('cal-cell-holiday-jp');
+        if (holiday?.type === 'intl') cell.classList.add('cal-cell-holiday-intl');
+        cell.innerHTML = `
+            ${isToday?'<div class="today-circle">'+d+'</div>':d}
+            <div class="lunar-text">${lunarDate.getJieQi() || lunarDate.getDayInChinese()}</div>
+            ${holiday ? `<div class="holiday-text ${holiday.type === 'jp' ? 'holiday-jp' : 'holiday-intl'}" title="${holiday.name}">${holiday.name}</div>` : ''}
+            ${marketClosures.map(item => `<div class="market-text ${item.className}" title="${item.tip}">${item.label}</div>`).join('')}
+            ${memos[key]?'<div class="event-dot"></div>':''}
+        `;
         cell.onclick = () => {
-            const n = prompt(`备注:`, memos[key]||"");
+            const tags = [];
+            if (holiday) tags.push(holiday.name);
+            marketClosures.forEach(item => tags.push(item.tip));
+            const promptTitle = tags.length ? `备注（${tags.join(' / ')}）:` : '备注:';
+            const n = prompt(promptTitle, memos[key]||"");
             if(n!==null) {
                 if(!n.trim()) delete memos[key];
                 else memos[key]=n;
@@ -279,9 +853,267 @@ function initCalendar() {
 }
 function changeMonth(d) { currDate.setMonth(currDate.getMonth() + d); initCalendar(); }
 
+function getHolidayInfo(year, month, day) {
+    const jp = getJapaneseHoliday(year, month, day);
+    if (jp) return { type: 'jp', name: jp };
+    const intl = getInternationalHoliday(month, day);
+    if (intl) return { type: 'intl', name: intl };
+    return null;
+}
+
+function getJapaneseHoliday(year, month, day) {
+    const fixed = {
+        '1-1': '元日',
+        '2-11': '建国記念の日',
+        '2-23': '天皇誕生日',
+        '4-29': '昭和の日',
+        '5-3': '憲法記念日',
+        '5-4': 'みどりの日',
+        '5-5': 'こどもの日',
+        '8-11': '山の日',
+        '11-3': '文化の日',
+        '11-23': '勤労感謝の日'
+    };
+    const key = `${month}-${day}`;
+    if (fixed[key]) return fixed[key];
+
+    if (month === 1 && day === getNthWeekday(year, 1, 1, 2)) return '成人の日';
+    if (month === 7 && day === getNthWeekday(year, 7, 1, 3)) return '海の日';
+    if (month === 9 && day === getNthWeekday(year, 9, 1, 3)) return '敬老の日';
+    if (month === 10 && day === getNthWeekday(year, 10, 1, 2)) return 'スポーツの日';
+    if (month === 3 && day === getSpringEquinoxDay(year)) return '春分の日';
+    if (month === 9 && day === getAutumnEquinoxDay(year)) return '秋分の日';
+
+    return '';
+}
+
+function getInternationalHoliday(month, day) {
+    const holidays = {
+        '1-1': 'New Year',
+        '2-14': 'Valentine\'s Day',
+        '3-8': 'Women\'s Day',
+        '4-22': 'Earth Day',
+        '5-1': 'Labor Day',
+        '6-1': 'Children\'s Day',
+        '10-31': 'Halloween',
+        '12-24': 'Christmas Eve',
+        '12-25': 'Christmas',
+        '12-31': 'New Year\'s Eve'
+    };
+    return holidays[`${month}-${day}`] || '';
+}
+
+const MARKET_HOLIDAYS = {
+    2026: {
+        aShareClosed: {
+            '1-1': 'A股休市',
+            '1-2': 'A股休市',
+            '1-3': 'A股休市',
+            '2-15': 'A股休市',
+            '2-16': 'A股休市',
+            '2-17': 'A股休市',
+            '2-18': 'A股休市',
+            '2-19': 'A股休市',
+            '2-20': 'A股休市',
+            '2-21': 'A股休市',
+            '2-22': 'A股休市',
+            '2-23': 'A股休市',
+            '4-4': 'A股休市',
+            '4-5': 'A股休市',
+            '4-6': 'A股休市',
+            '5-1': 'A股休市',
+            '5-2': 'A股休市',
+            '5-3': 'A股休市',
+            '5-4': 'A股休市',
+            '5-5': 'A股休市',
+            '6-19': 'A股休市',
+            '6-20': 'A股休市',
+            '6-21': 'A股休市',
+            '9-25': 'A股休市',
+            '9-26': 'A股休市',
+            '9-27': 'A股休市',
+            '10-1': 'A股休市',
+            '10-2': 'A股休市',
+            '10-3': 'A股休市',
+            '10-4': 'A股休市',
+            '10-5': 'A股休市',
+            '10-6': 'A股休市',
+            '10-7': 'A股休市',
+            '10-8': 'A股休市'
+        },
+        usClosed: {
+            '1-1': '美股休市',
+            '1-19': '美股休市',
+            '2-16': '美股休市',
+            '4-3': '美股休市',
+            '5-25': '美股休市',
+            '6-19': '美股休市',
+            '7-3': '美股休市',
+            '9-7': '美股休市',
+            '11-26': '美股休市',
+            '12-25': '美股休市'
+        },
+        usEarlyClose: {
+            '11-27': '美股13:00收市',
+            '12-24': '美股13:00收市'
+        }
+    }
+};
+
+function getMarketClosures(year, month, day) {
+    const y = MARKET_HOLIDAYS[year];
+    if (!y) return [];
+    const key = `${month}-${day}`;
+    const result = [];
+    if (y.aShareClosed[key]) {
+        result.push({ label: 'A股休市', tip: 'A股休市（09:30-11:30，13:00-15:00 停盘）', className: 'market-a' });
+    }
+    if (y.usClosed[key]) {
+        result.push({ label: '美股休市', tip: '美股休市（常规 09:30-16:00 美东时间）', className: 'market-us' });
+    }
+    if (y.usEarlyClose[key]) {
+        result.push({ label: '美股早收', tip: '美股提前收市，13:00 收市（美东时间）', className: 'market-us-early' });
+    }
+    return result;
+}
+
+function getNthWeekday(year, month, weekday, nth) {
+    const firstDay = new Date(year, month - 1, 1).getDay();
+    const delta = (weekday - firstDay + 7) % 7;
+    return 1 + delta + (nth - 1) * 7;
+}
+
+function getSpringEquinoxDay(year) {
+    return Math.floor(20.8431 + 0.242194 * (year - 1980)) - Math.floor((year - 1980) / 4);
+}
+
+function getAutumnEquinoxDay(year) {
+    return Math.floor(23.2488 + 0.242194 * (year - 1980)) - Math.floor((year - 1980) / 4);
+}
+
+function changeCountry() {
+    selectedCountry = document.getElementById('country-select').value;
+    const title = document.getElementById('address-title');
+    const zipLabel = document.getElementById('zip-label');
+    const detailLabel = document.getElementById('address-detail-label');
+    const searchTitle = document.getElementById('search-title');
+    const searchLabel = document.getElementById('search-label');
+    const zipInput = document.getElementById('zip-jp');
+    const regionInput = document.getElementById('region-jp');
+    const localityInput = document.getElementById('locality-jp');
+    const streetInput = document.getElementById('street-jp');
+    const tip = document.getElementById('zip-tip');
+    const countryName = document.querySelector('.p-country-name');
+    const addressCard = document.querySelector('#tab6 .module-card.h-adr, #tab6 .module-card[data-address-card="1"]');
+
+    const config = {
+        JP: {
+            title: '📮 日本地址查询 (邮编)',
+            zipLabel: '邮政区号 (7位数字自动查询)',
+            detailLabel: '地址详情',
+            zipPlaceholder: '例：1000001',
+            searchTitle: '🔎 日本地址查询',
+            searchLabel: '地址关键词（可不完整）',
+            searchPlaceholder: '例：新宿 西新宿 2-8',
+            regionPlaceholder: '都道府县',
+            localityPlaceholder: '市区町村',
+            streetPlaceholder: '街道',
+            tip: '日本支持邮编自动回填；也可输入地址关键词查询。',
+            countryName: 'Japan'
+        },
+        KR: {
+            title: '📮 韩国地址查询',
+            zipLabel: '邮政编码 / 地址关键词',
+            detailLabel: '韩国地址详情',
+            zipPlaceholder: '例：04524 / Seoul Gangnam',
+            searchTitle: '🔎 韩国地址查询',
+            searchLabel: '地址关键词或邮编',
+            searchPlaceholder: '例：Seoul Gangnam / 04524',
+            regionPlaceholder: '州 / 特别市',
+            localityPlaceholder: '城市 / 区',
+            streetPlaceholder: '街道 / 详细地址',
+            tip: '韩国请输入邮编或地址关键词后点击“查询”。',
+            countryName: 'South Korea'
+        },
+        SG: {
+            title: '📮 新加坡地址查询',
+            zipLabel: '邮政编码 / 地址关键词',
+            detailLabel: '新加坡地址详情',
+            zipPlaceholder: '例：018989 / Marina Bay',
+            searchTitle: '🔎 新加坡地址查询',
+            searchLabel: '地址关键词或邮编',
+            searchPlaceholder: '例：Marina Bay / 018989',
+            regionPlaceholder: '国家 / 区域',
+            localityPlaceholder: '城市 / 区',
+            streetPlaceholder: '街道 / 详细地址',
+            tip: '新加坡请输入邮编或地址关键词后点击“查询”。',
+            countryName: 'Singapore'
+        },
+        US: {
+            title: '📮 美国地址查询',
+            zipLabel: '邮政编码 / 地址关键词',
+            detailLabel: '美国地址详情',
+            zipPlaceholder: '例：10001 / Los Angeles',
+            searchTitle: '🔎 美国地址查询',
+            searchLabel: '地址关键词或邮编',
+            searchPlaceholder: '例：Los Angeles / 10001',
+            regionPlaceholder: '州',
+            localityPlaceholder: '城市 / 县',
+            streetPlaceholder: '街道 / 详细地址',
+            tip: '美国请输入 ZIP Code 或地址关键词后点击“查询”。',
+            countryName: 'United States'
+        }
+    }[selectedCountry];
+
+    title.innerText = config.title;
+    zipLabel.innerText = config.zipLabel;
+    detailLabel.innerText = config.detailLabel;
+    searchTitle.innerText = config.searchTitle;
+    searchLabel.innerText = config.searchLabel;
+    zipInput.placeholder = config.zipPlaceholder;
+    document.getElementById('addr-query').placeholder = config.searchPlaceholder;
+    regionInput.placeholder = config.regionPlaceholder;
+    localityInput.placeholder = config.localityPlaceholder;
+    streetInput.placeholder = config.streetPlaceholder;
+    tip.innerText = config.tip;
+    countryName.innerText = config.countryName;
+
+    if (addressCard) {
+        addressCard.dataset.addressCard = '1';
+        if (selectedCountry === 'JP') addressCard.classList.add('h-adr');
+        else addressCard.classList.remove('h-adr');
+    }
+    if (selectedCountry === 'JP') {
+        zipInput.classList.add('p-postal-code');
+        regionInput.classList.add('p-region');
+        localityInput.classList.add('p-locality');
+        streetInput.classList.add('p-street-address');
+        regionInput.readOnly = true;
+        localityInput.readOnly = true;
+    } else {
+        zipInput.classList.remove('p-postal-code');
+        regionInput.classList.remove('p-region');
+        localityInput.classList.remove('p-locality');
+        streetInput.classList.remove('p-street-address');
+        regionInput.readOnly = false;
+        localityInput.readOnly = false;
+    }
+
+    zipInput.value = '';
+    regionInput.value = '';
+    localityInput.value = '';
+    streetInput.value = '';
+    clearAddressResults();
+}
+
 // 邮编复制
 function copyJpAddress() {
-    navigator.clipboard.writeText(`〒${document.getElementById('zip-jp').value} ${document.getElementById('region-jp').value}${document.getElementById('locality-jp').value}${document.getElementById('street-jp').value}`)
+    const zip = document.getElementById('zip-jp').value.trim();
+    const region = document.getElementById('region-jp').value.trim();
+    const locality = document.getElementById('locality-jp').value.trim();
+    const street = document.getElementById('street-jp').value.trim();
+    const prefix = selectedCountry === 'JP' && zip ? `〒${zip} ` : (zip ? `${zip} ` : '');
+    navigator.clipboard.writeText(`${prefix}${region} ${locality} ${street}`.trim())
         .then(() => showToast("地址已复制"));
 }
 
@@ -295,12 +1127,14 @@ function extractPrefecture(text) {
 }
 
 async function searchAddress() {
-    const q = document.getElementById('addr-query').value.trim();
+    const q = document.getElementById('addr-query').value.trim() || document.getElementById('zip-jp').value.trim();
     const box = document.getElementById('addr-results');
-    if (!q) return alert('请输入地址关键词');
+    if (!q) return alert('请输入地址关键词或邮编');
     box.innerText = '查询中...';
     try {
-        const url = 'https://msearch.gsi.go.jp/address-search/AddressSearch?q=' + encodeURIComponent(q);
+        const url = selectedCountry === 'JP'
+            ? 'https://msearch.gsi.go.jp/address-search/AddressSearch?q=' + encodeURIComponent(q)
+            : 'https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=8&countrycodes=' + selectedCountry.toLowerCase() + '&q=' + encodeURIComponent(q);
         const res = await fetch(url);
         const data = await res.json();
         if (!Array.isArray(data) || data.length === 0) {
@@ -317,8 +1151,12 @@ function renderAddressResults(list) {
     const box = document.getElementById('addr-results');
     box.innerHTML = '';
     list.forEach(item => {
-        const title = (item && item.properties && item.properties.title) || item.title || '';
-        const pref = extractPrefecture(title) || '未识别';
+        const title = selectedCountry === 'JP'
+            ? ((item && item.properties && item.properties.title) || item.title || '')
+            : (item.display_name || '');
+        const pref = selectedCountry === 'JP'
+            ? (extractPrefecture(title) || '未识别')
+            : extractRegion(item);
 
         const wrap = document.createElement('div');
         wrap.className = 'result-item';
@@ -328,7 +1166,7 @@ function renderAddressResults(list) {
         t.innerText = title || '（无标题）';
 
         const p = document.createElement('div');
-        p.innerHTML = `所在都道府县：<span class="result-pref">${pref}</span>`;
+        p.innerHTML = `所在区域：<span class="result-pref">${pref || '未识别'}</span>`;
 
         const btnRow = document.createElement('div');
         btnRow.style.display = 'flex';
@@ -339,7 +1177,7 @@ function renderAddressResults(list) {
         btnPref.className = 'btn-main';
         btnPref.style.background = '#27ae60';
         btnPref.style.flex = '1';
-        btnPref.innerText = '复制县名';
+        btnPref.innerText = selectedCountry === 'JP' ? '复制县名' : '复制区域';
         btnPref.onclick = () => copyText(pref);
 
         const btnAddr = document.createElement('button');
@@ -351,6 +1189,15 @@ function renderAddressResults(list) {
 
         btnRow.appendChild(btnPref);
         btnRow.appendChild(btnAddr);
+        if (selectedCountry !== 'JP') {
+            const btnUse = document.createElement('button');
+            btnUse.className = 'btn-main';
+            btnUse.style.background = '#e67e22';
+            btnUse.style.flex = '1';
+            btnUse.innerText = '带入上方';
+            btnUse.onclick = () => fillAddressFromResult(item);
+            btnRow.appendChild(btnUse);
+        }
 
         wrap.appendChild(t);
         wrap.appendChild(p);
@@ -358,6 +1205,30 @@ function renderAddressResults(list) {
 
         box.appendChild(wrap);
     });
+}
+
+function extractRegion(item) {
+    const addr = (item && item.address) || {};
+    return addr.state || addr.region || addr.county || addr.city || addr.country || '';
+}
+
+function fillAddressFromResult(item) {
+    if (selectedCountry === 'JP') return;
+    const addr = (item && item.address) || {};
+    const zip = addr.postcode || '';
+    const region = addr.state || addr.region || addr.country || '';
+    const locality = addr.city || addr.town || addr.county || addr.suburb || '';
+    const street = [
+        addr.road,
+        addr.house_number,
+        addr.neighbourhood,
+        addr.quarter
+    ].filter(Boolean).join(' ');
+
+    document.getElementById('zip-jp').value = zip;
+    document.getElementById('region-jp').value = region;
+    document.getElementById('locality-jp').value = locality;
+    document.getElementById('street-jp').value = street || (item.display_name || '');
 }
 
 function clearAddressResults() {
@@ -504,6 +1375,11 @@ function renderContainerTable() {
         return hay.includes(q);
     });
 
+    if (!data.length) {
+        body.innerHTML = `<tr><td colspan="8" style="padding:12px; text-align:center; color:#999; border:1px solid #e6efe0;">未找到匹配的柜型数据</td></tr>`;
+        return;
+    }
+
     data.forEach((row, idx) => {
         const tr = document.createElement('tr');
         const bg = idx % 2 === 1 ? 'background:#f6fbf1;' : '';
@@ -528,6 +1404,140 @@ function renderContainerTable() {
             <td style="padding:8px; border:1px solid #e6efe0; ${bg}">${remarkText}</td>
             <td style="padding:8px; border:1px solid #e6efe0; ${bg}">
                 <button class="btn-main" style="background:#27ae60; padding:6px 8px; font-size:12px;" onclick="copyText('${copyTextLine.replace(/'/g, "\\'")}')">复制</button>
+            </td>
+        `;
+        body.appendChild(tr);
+    });
+}
+
+function renderShippingTable() {
+    const body = document.getElementById('shipping-table-body');
+    if (!body) return;
+    body.innerHTML = '';
+
+    SHIPPING_DATA.forEach((row, idx) => {
+        const bg = idx % 2 === 1 ? 'background:#fffaf0;' : '';
+        const copyLine = `${row.name} | 国家/地区:${row.country} | 背后企业/股东:${row.background} | 特点:${row.feature} | 免柜期参考:${row.freeTime}`;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="padding:8px; border:1px solid #ead59b; ${bg}">${row.name}</td>
+            <td style="padding:8px; border:1px solid #ead59b; ${bg}">${row.country}</td>
+            <td style="padding:8px; border:1px solid #ead59b; ${bg}">${row.background}</td>
+            <td style="padding:8px; border:1px solid #ead59b; ${bg}">${row.feature}</td>
+            <td style="padding:8px; border:1px solid #ead59b; ${bg}">${row.freeTime}</td>
+            <td style="padding:8px; border:1px solid #ead59b; ${bg}">
+                <button class="btn-main" style="background:#27ae60; padding:6px 8px; font-size:12px;" onclick="copyText('${copyLine.replace(/'/g, "\\'")}')">复制</button>
+            </td>
+        `;
+        body.appendChild(tr);
+    });
+}
+
+function renderTruckTable() {
+    const body = document.getElementById('truck-table-body');
+    if (!body) return;
+    body.innerHTML = '';
+    const q = (document.getElementById('truck-search')?.value || '').trim().toLowerCase();
+    const data = TRUCK_DATA.filter(row => {
+        if (!q) return true;
+        return [row.model, row.size, row.volume, row.weight, row.usage].join(' ').toLowerCase().includes(q);
+    });
+
+    if (!data.length) {
+        body.innerHTML = `<tr><td colspan="6" style="padding:12px; text-align:center; color:#999; border:1px solid #e6efe0;">未找到匹配的货车数据</td></tr>`;
+        return;
+    }
+
+    data.forEach((row, idx) => {
+        const bg = idx % 2 === 1 ? 'background:#f6fbf1;' : '';
+        const copyLine = `${row.model} | 尺寸:${row.size} | 方数:${row.volume} | 载重:${row.weight} | 用途:${row.usage}`;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">${row.model}</td>
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">${row.size}</td>
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">${row.volume}</td>
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">${row.weight}</td>
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">${row.usage}</td>
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">
+                <button class="btn-main" style="background:#27ae60; padding:6px 8px; font-size:12px;" onclick="copyText('${copyLine.replace(/'/g, "\\'")}')">复制</button>
+            </td>
+        `;
+        body.appendChild(tr);
+    });
+}
+
+function renderJpTruckTable() {
+    const body = document.getElementById('jp-truck-table-body');
+    if (!body) return;
+    body.innerHTML = '';
+    const q = (document.getElementById('jp-truck-search')?.value || '').trim().toLowerCase();
+    const data = JP_TRUCK_DATA.filter(row => {
+        if (!q) return true;
+        return [row.model, row.size, row.volume, row.weight, row.usage].join(' ').toLowerCase().includes(q);
+    });
+
+    if (!data.length) {
+        body.innerHTML = `<tr><td colspan="6" style="padding:12px; text-align:center; color:#999; border:1px solid #e6efe0;">未找到匹配的日本货车数据</td></tr>`;
+        return;
+    }
+
+    data.forEach((row, idx) => {
+        const bg = idx % 2 === 1 ? 'background:#f5f9ff;' : '';
+        const copyLine = `${row.model} | 尺寸:${row.size} | 方数:${row.volume} | 载重:${row.weight} | 用途:${row.usage}`;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">${row.model}</td>
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">${row.size}</td>
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">${row.volume}</td>
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">${row.weight}</td>
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">${row.usage}</td>
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">
+                <button class="btn-main" style="background:#27ae60; padding:6px 8px; font-size:12px;" onclick="copyText('${copyLine.replace(/'/g, "\\'")}')">复制</button>
+            </td>
+        `;
+        body.appendChild(tr);
+    });
+}
+
+function renderKrTruckTable() {
+    renderGenericTruckTable('kr-truck-search', 'kr-truck-table-body', KR_TRUCK_DATA, '未找到匹配的韩国货车数据', '#f5f9ff');
+}
+
+function renderSgTruckTable() {
+    renderGenericTruckTable('sg-truck-search', 'sg-truck-table-body', SG_TRUCK_DATA, '未找到匹配的新加坡货车数据', '#f3fbf6');
+}
+
+function renderUsTruckTable() {
+    renderGenericTruckTable('us-truck-search', 'us-truck-table-body', US_TRUCK_DATA, '未找到匹配的美国货车数据', '#fff6f6');
+}
+
+function renderGenericTruckTable(searchId, bodyId, dataset, emptyText, altBg) {
+    const body = document.getElementById(bodyId);
+    if (!body) return;
+    body.innerHTML = '';
+    const q = (document.getElementById(searchId)?.value || '').trim().toLowerCase();
+    const data = dataset.filter(row => {
+        if (!q) return true;
+        return [row.model, row.size, row.volume, row.weight, row.usage].join(' ').toLowerCase().includes(q);
+    });
+
+    if (!data.length) {
+        body.innerHTML = `<tr><td colspan="6" style="padding:12px; text-align:center; color:#999; border:1px solid #e6efe0;">${emptyText}</td></tr>`;
+        return;
+    }
+
+    data.forEach((row, idx) => {
+        const bg = idx % 2 === 1 ? `background:${altBg};` : '';
+        const copyLine = `${row.model} | 尺寸:${row.size} | 方数:${row.volume} | 载重:${row.weight} | 用途:${row.usage}`;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">${row.model}</td>
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">${row.size}</td>
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">${row.volume}</td>
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">${row.weight}</td>
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">${row.usage}</td>
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">
+                <button class="btn-main" style="background:#27ae60; padding:6px 8px; font-size:12px;" onclick="copyText('${copyLine.replace(/'/g, "\\'")}')">复制</button>
             </td>
         `;
         body.appendChild(tr);
