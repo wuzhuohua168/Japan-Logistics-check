@@ -568,6 +568,14 @@
 
     <div class="module-card">
         <div class="title">敏感货检查</div>
+        <div class="row">
+            <label>客户产品信息录入</label>
+            <textarea id="sensitive-product-input" rows="4" placeholder="例：蓝牙耳机，内置锂电池，带磁吸充电盒；或：面霜 100ml，含酒精；或：木制玩具，品牌货"></textarea>
+        </div>
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+            <button class="btn-main" style="background:#8e44ad; flex:1;" onclick="analyzeSensitiveProduct()">智能识别</button>
+            <button class="btn-main" style="background:#95a5a6; flex:1;" onclick="clearSensitiveChecks()">清空</button>
+        </div>
         <div class="check-grid">
             <label class="check-item"><input type="checkbox" value="带电池">带电池</label>
             <label class="check-item"><input type="checkbox" value="液体">液体</label>
@@ -831,6 +839,17 @@ const SENSITIVE_CARGO_RULES = {
         docs: ['品牌授权书', '采购凭证/销售链路证明'],
         risks: ['注意知识产权和海关扣货风险', '渠道不同对品牌审核要求差异大']
     }
+};
+
+const SENSITIVE_KEYWORDS = {
+    '带电池': ['电池', '锂电', '纽扣电池', '充电', '蓝牙', '耳机', '充电宝', 'battery', 'lithium'],
+    '液体': ['液体', '液', '精华', '香水', '乳液', '面霜', '洗发水', '饮料', 'oil', 'liquid'],
+    '粉末': ['粉末', '粉', '奶粉', '调味粉', 'powder'],
+    '磁性': ['磁', '磁铁', '扬声器', '喇叭', '马达', '电机', 'magnet'],
+    '食品': ['食品', '零食', '糖果', '饼干', '茶', '咖啡', '奶粉', 'food', 'snack'],
+    '化妆品': ['化妆品', '面膜', '口红', '面霜', '乳液', '精华', '香水', 'cosmetic', 'skincare'],
+    '木制品': ['木', '木制', '木头', '木质', '原木', 'plywood', 'wood'],
+    '品牌货': ['品牌', '授权', 'nike', 'adidas', 'apple', 'sony', '迪士尼', 'hello kitty']
 };
 
 const PORT_RECOMMENDATION_RULES = [
@@ -2087,6 +2106,40 @@ function checkSensitiveCargo() {
         `建议资料：${Array.from(docs).join('、') || '请人工确认'}`,
         `重点提醒：${risks.join('；') || '请结合具体货物再确认'}`
     ].join('\n');
+}
+
+function analyzeSensitiveProduct() {
+    const text = (document.getElementById('sensitive-product-input').value || '').trim().toLowerCase();
+    const box = document.getElementById('sensitive-result');
+    if (!text) {
+        box.innerText = '请输入客户产品信息后再识别。';
+        return;
+    }
+
+    const matched = Object.entries(SENSITIVE_KEYWORDS)
+        .filter(([, keywords]) => keywords.some(keyword => text.includes(keyword.toLowerCase())))
+        .map(([type]) => type);
+
+    document.querySelectorAll('.check-grid input[type="checkbox"]').forEach(el => {
+        el.checked = matched.includes(el.value);
+    });
+
+    if (!matched.length) {
+        box.innerText = '未识别到明确敏感特征，按普通货初步判断；建议人工再确认是否涉及带电、液体、粉末、品牌或特殊监管。';
+        return;
+    }
+
+    checkSensitiveCargo();
+    const current = box.innerText;
+    box.innerText = `智能识别结果：${matched.join('、')}\n${current}`;
+}
+
+function clearSensitiveChecks() {
+    document.getElementById('sensitive-product-input').value = '';
+    document.querySelectorAll('.check-grid input[type="checkbox"]').forEach(el => {
+        el.checked = false;
+    });
+    document.getElementById('sensitive-result').innerText = '';
 }
 
 function calcFees() {
