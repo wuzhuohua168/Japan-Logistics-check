@@ -50,6 +50,32 @@
         .trend-card { background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%); border: 1px solid #e4edf7; border-radius: 12px; padding: 12px; }
         .trend-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: #666; margin-top: 8px; flex-wrap: wrap; }
         #jpy-trend-canvas { width: 100%; height: 180px; display: block; }
+        .mini-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .quick-card { padding: 12px; border: 1px solid #e7edf5; border-radius: 10px; background: #fafcff; font-size: 12px; color: #555; cursor: pointer; }
+        .quick-card b { display: block; color: #2c3e50; margin-bottom: 4px; }
+        .dashboard-hero { background: linear-gradient(135deg, #eaf4ff 0%, #fdfdfd 55%, #eef8f1 100%); border: 1px solid #d8e7f8; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .stat-card { padding: 12px; border-radius: 10px; border: 1px solid #e6edf5; background: #fff; }
+        .stat-label { font-size: 11px; color: #7b8794; margin-bottom: 4px; }
+        .stat-value { font-size: 18px; font-weight: bold; color: #2c3e50; }
+        .stat-sub { font-size: 11px; color: #6f7d8a; margin-top: 4px; line-height: 1.5; }
+        .tool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .compact-tool { border: 1px solid #e7edf5; border-radius: 10px; padding: 12px; background: #fff; }
+        .compact-tool .title-mini { font-size: 13px; font-weight: bold; color: #2c3e50; margin-bottom: 8px; }
+        .check-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .check-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #555; }
+        .check-item input { width: auto; }
+        .tool-result { padding: 10px; border: 1px solid #e8eef5; border-radius: 8px; background: #fafcff; font-size: 12px; line-height: 1.7; color: #555; }
+        textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; background: #fff; resize: vertical; }
+        .todo-row { display: flex; gap: 8px; margin-bottom: 10px; }
+        .todo-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border: 1px solid #e8eef5; border-radius: 8px; background: #fff; font-size: 12px; color: #555; margin-bottom: 8px; }
+        .todo-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .todo-left input { width: auto; }
+        .todo-done { color: #98a4af; text-decoration: line-through; }
+
+        @media (max-width: 768px) {
+            .mini-grid, .dashboard-grid, .tool-grid { grid-template-columns: 1fr; }
+        }
 
         .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 10px 20px; border-radius: 20px; z-index: 1000; opacity: 0; transition: 0.3s; pointer-events: none; font-size: 13px; }
         .toast.show { opacity: 1; top: 30px; }
@@ -57,7 +83,7 @@
 </head>
 <body>
 
-<div id="tab3" class="tab-content active">
+<div id="tab3" class="tab-content">
     <div class="module-card">
         <div class="title">汇率转换</div>
         <input type="number" id="val-left" value="1000" oninput="convertRate('left')" style="font-size:24px; text-align:center; margin-bottom:10px;">
@@ -394,8 +420,190 @@
     </div>
 </div>
 
+<div id="tab9" class="tab-content active">
+    <div class="module-card dashboard-hero">
+        <div class="title">首页仪表盘</div>
+        <div style="font-size:12px; color:#5f6b78; margin-bottom:10px;">把高频判断放在首页：搜索、换算、估算、推荐都可以直接在这里完成。</div>
+        <div class="dashboard-grid">
+            <div class="stat-card">
+                <div class="stat-label">当前默认首页</div>
+                <div class="stat-value">工具工作台</div>
+                <div class="stat-sub" id="dashboard-rates-info">汇率加载中...</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">本月提醒</div>
+                <div class="stat-value" id="dashboard-holiday-title">节假/休市</div>
+                <div class="stat-sub" id="dashboard-holiday-info">正在整理本月提醒...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="title">快捷入口</div>
+        <div class="mini-grid">
+            <div class="quick-card" onclick="switchTab(3)"><b>汇率</b>看汇率、三币联动、日元走势图</div>
+            <div class="quick-card" onclick="switchTab(6)"><b>地址</b>多国家地址查询与亚马逊仓库代码</div>
+            <div class="quick-card" onclick="switchTab(7)"><b>柜型与船司</b>看柜型、船司、免柜期参考</div>
+            <div class="quick-card" onclick="switchTab(8)"><b>货车</b>多国家货车尺寸、方数、载重</div>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="title">全局搜索</div>
+        <div class="row">
+            <input type="text" id="global-search" placeholder="搜索仓库代码 / 船司 / 柜型 / 货车型号 / 港口代码" oninput="renderGlobalSearch()">
+        </div>
+        <div id="global-search-results"></div>
+    </div>
+
+    <div class="module-card">
+        <div class="title">高频计算</div>
+        <div class="tool-grid">
+            <div class="compact-tool">
+                <div class="title-mini">材积重计算</div>
+                <div class="row"><label>长 × 宽 × 高（cm）</label><input type="text" id="vol-size" placeholder="例：60*40*50"></div>
+                <div class="row"><label>件数</label><input type="number" id="vol-qty" value="1"></div>
+                <div class="row"><label>实际总重量（kg）</label><input type="number" id="vol-actual" value="0"></div>
+                <div class="row"><label>计费系数</label><select id="vol-divisor"><option value="6000" selected>空运 6000</option><option value="5000">快递 5000</option><option value="7000">特殊 7000</option></select></div>
+                <div style="display:flex; gap:10px;"><button class="btn-main" style="background:#4a90e2; flex:1;" onclick="calcVolumetric()">计算</button><button class="btn-main" style="background:#27ae60; flex:1;" onclick="copyToolResult('vol-result')">复制</button></div>
+                <div id="vol-result" class="tool-result" style="margin-top:10px;"></div>
+            </div>
+
+            <div class="compact-tool">
+                <div class="title-mini">装柜估算</div>
+                <div class="row"><label>总方数（m3）</label><input type="number" id="cbm-total" value="10" step="0.01"></div>
+                <div class="row"><label>总重量（kg）</label><input type="number" id="cbm-weight" value="1000"></div>
+                <div style="display:flex; gap:10px;"><button class="btn-main" style="background:#4a90e2; flex:1;" onclick="calcContainerFit()">估算</button><button class="btn-main" style="background:#27ae60; flex:1;" onclick="copyToolResult('cbm-result')">复制</button></div>
+                <div id="cbm-result" class="tool-result" style="margin-top:10px;"></div>
+            </div>
+
+            <div class="compact-tool">
+                <div class="title-mini">车型推荐</div>
+                <div class="row"><label>国家/地区</label><select id="truck-country"><option value="CN" selected>中国</option><option value="JP">日本</option><option value="KR">韩国</option><option value="SG">新加坡</option><option value="US">美国</option></select></div>
+                <div class="row"><label>货物总体积（m3）</label><input type="number" id="truck-vol" value="8" step="0.1"></div>
+                <div class="row"><label>货物总重量（kg）</label><input type="number" id="truck-kg" value="1000"></div>
+                <div style="display:flex; gap:10px;"><button class="btn-main" style="background:#4a90e2; flex:1;" onclick="recommendTruck()">推荐</button><button class="btn-main" style="background:#27ae60; flex:1;" onclick="copyToolResult('truck-rec-result')">复制</button></div>
+                <div id="truck-rec-result" class="tool-result" style="margin-top:10px;"></div>
+            </div>
+
+            <div class="compact-tool">
+                <div class="title-mini">时区换算</div>
+                <div class="row"><label>中国时间</label><input type="datetime-local" id="tz-cn"></div>
+                <div style="display:flex; gap:10px;"><button class="btn-main" style="background:#4a90e2; flex:1;" onclick="convertTimezones()">换算</button><button class="btn-main" style="background:#27ae60; flex:1;" onclick="copyToolResult('tz-result')">复制</button></div>
+                <div id="tz-result" class="tool-result" style="margin-top:10px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="title">待办区</div>
+        <div class="todo-row">
+            <input type="text" id="dashboard-todo-input" placeholder="输入待办，例如：确认福州柜子厦门港订舱价格" style="flex:1;">
+            <button class="btn-main" style="background:#4a90e2; width:100px;" onclick="addDashboardTodo()">添加</button>
+        </div>
+        <div id="dashboard-todo-list"></div>
+    </div>
+
+    <div class="module-card">
+        <div class="title">数据存储</div>
+        <div class="tool-result" id="storage-status">存储状态加载中...</div>
+        <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+            <button class="btn-main" style="background:#4a90e2; flex:1;" onclick="saveAppStateNow()">立即保存到本地</button>
+            <button class="btn-main" style="background:#27ae60; flex:1;" onclick="exportAppState()">导出 JSON</button>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+            <button class="btn-main" style="background:#8e44ad; flex:1;" onclick="triggerImportState()">导入 JSON</button>
+            <button class="btn-main" style="background:#e67e22; flex:1;" onclick="bindCloudFile()">绑定 iCloud 文件</button>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+            <button class="btn-main" style="background:#16a085; flex:1;" onclick="syncToCloudFile()">同步到已绑定文件</button>
+            <button class="btn-main" style="background:#95a5a6; flex:1;" onclick="clearCloudBinding()">清除云端绑定</button>
+        </div>
+        <div style="margin-top:10px; font-size:12px; color:#777; line-height:1.7;">
+            默认会自动保存到当前浏览器本地。<br>
+            如果你在浏览器文件选择器里手动选了 iCloud Drive 中的 JSON 文件，就可以把数据同步进去。是否支持取决于浏览器的 File System Access 能力。
+        </div>
+        <input type="file" id="state-import-file" accept="application/json,.json" style="display:none;" onchange="importAppStateFromFile(event)">
+    </div>
+
+    <div class="module-card">
+        <div class="title">详细工具</div>
+        <div style="font-size:12px; color:#777;">下面保留完整的速查、检查、费用和节点记录模块，适合继续补充业务细节。</div>
+    </div>
+
+    <div class="module-card">
+        <div class="title">订舱决策助手</div>
+        <div style="font-size:12px; color:#777; margin-bottom:10px;">只需输入出货地址和收件地址，系统会智能识别区域信息，并联动给出出口港、目的港、备选港、建议船司和操作提醒。当前为启发式规则版，适合前期判断。</div>
+        <div class="row"><label>起运地址</label><input type="text" id="booking-origin" placeholder="例：福建省福州市仓山区"></div>
+        <div class="row"><label>目的收货地址</label><input type="text" id="booking-destination" placeholder="例：日本东京都江东区 / 美国洛杉矶"></div>
+        <div class="row"><label>柜型</label><select id="booking-container"><option value="20GP">20GP</option><option value="40GP">40GP</option><option value="40HQ" selected>40HQ</option><option value="45HQ">45HQ</option></select></div>
+        <div class="row"><label>总重量（kg）</label><input type="number" id="booking-weight" value="10000"></div>
+        <div class="row"><label>时效偏好</label><select id="booking-priority"><option value="balanced" selected>平衡成本与时效</option><option value="cost">成本优先</option><option value="speed">时效优先</option></select></div>
+        <div class="row"><label>补充备注（可选）</label><input type="text" id="booking-note" placeholder="例：亚马逊仓 / 重货 / 需稳定船期"></div>
+        <div style="display:flex; gap:10px;"><button class="btn-main" style="background:#4a90e2; flex:1;" onclick="runBookingAdvisor()">生成建议</button><button class="btn-main" style="background:#27ae60; flex:1;" onclick="copyToolResult('booking-result')">复制</button></div>
+        <div id="booking-result" class="tool-result" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="module-card">
+        <div class="title">贸易术语速查</div>
+        <div style="overflow:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                <thead>
+                    <tr>
+                        <th style="background:#4a90e2; color:#fff; padding:8px; border:1px solid #d9e6cf;">术语</th>
+                        <th style="background:#4a90e2; color:#fff; padding:8px; border:1px solid #d9e6cf;">主要责任</th>
+                        <th style="background:#4a90e2; color:#fff; padding:8px; border:1px solid #d9e6cf;">适用理解</th>
+                    </tr>
+                </thead>
+                <tbody id="incoterm-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="title">港口/机场代码速查</div>
+        <div class="row"><input type="text" id="port-search" placeholder="例：PVG / NRT / LAX / SIN" oninput="renderPortSearch()"></div>
+        <div id="port-search-results"></div>
+    </div>
+
+    <div class="module-card">
+        <div class="title">敏感货检查</div>
+        <div class="check-grid">
+            <label class="check-item"><input type="checkbox" value="带电池">带电池</label>
+            <label class="check-item"><input type="checkbox" value="液体">液体</label>
+            <label class="check-item"><input type="checkbox" value="粉末">粉末</label>
+            <label class="check-item"><input type="checkbox" value="磁性">磁性</label>
+            <label class="check-item"><input type="checkbox" value="食品">食品</label>
+            <label class="check-item"><input type="checkbox" value="化妆品">化妆品</label>
+            <label class="check-item"><input type="checkbox" value="木制品">木制品</label>
+            <label class="check-item"><input type="checkbox" value="品牌货">品牌货</label>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:10px;"><button class="btn-main" style="background:#4a90e2; flex:1;" onclick="checkSensitiveCargo()">检查</button><button class="btn-main" style="background:#27ae60; flex:1;" onclick="copyToolResult('sensitive-result')">复制</button></div>
+        <div id="sensitive-result" class="tool-result" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="module-card">
+        <div class="title">费用模板</div>
+        <div class="row"><label>海运费+国内港杂</label><input type="number" id="fee-ocean" value="0"></div>
+        <div class="row"><label>拖车费</label><input type="number" id="fee-truck" value="0"></div>
+        <div class="row"><label>报关费</label><input type="number" id="fee-customs" value="0"></div>
+        <div class="row"><label>目的港杂</label><input type="number" id="fee-dest-port" value="0"></div>
+        <div class="row"><label>清关费</label><input type="number" id="fee-clearance" value="0"></div>
+        <div class="row"><label>派送费</label><input type="number" id="fee-delivery" value="0"></div>
+        <div style="display:flex; gap:10px;"><button class="btn-main" style="background:#4a90e2; flex:1;" onclick="calcFees()">汇总</button><button class="btn-main" style="background:#27ae60; flex:1;" onclick="copyToolResult('fee-result')">复制</button></div>
+        <div id="fee-result" class="tool-result" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="module-card">
+        <div class="title">物流节点记录</div>
+        <textarea id="shipment-notes" rows="8" placeholder="记录：订舱 / 放舱 / 提柜 / 报关 / 进港 / 开船 / 到港 / 清关 / 派送"></textarea>
+        <div style="display:flex; gap:10px; margin-top:10px;"><button class="btn-main" style="background:#4a90e2; flex:1;" onclick="saveShipmentNotes()">保存</button><button class="btn-main" style="background:#27ae60; flex:1;" onclick="copyText(document.getElementById('shipment-notes').value)">复制</button></div>
+    </div>
+</div>
+
 <div class="tab-bar">
-    <div class="tab-item active" onclick="switchTab(3)"><span class="tab-icon">💴</span><span>汇率</span></div>
+    <div class="tab-item active" onclick="switchTab(9)"><span class="tab-icon">🧰</span><span>工具</span></div>
+    <div class="tab-item" onclick="switchTab(3)"><span class="tab-icon">💴</span><span>汇率</span></div>
     <div class="tab-item" onclick="switchTab(4)"><span class="tab-icon">📅</span><span>日历</span></div>
     <div class="tab-item" onclick="switchTab(6)"><span class="tab-icon">📮</span><span>邮编</span></div>
     <div class="tab-item" onclick="switchTab(7)"><span class="tab-icon">🚢</span><span>柜型</span></div>
@@ -409,6 +617,10 @@ let currDate = new Date(), rates = {}, memos = JSON.parse(localStorage.getItem('
 let selectedCountry = 'JP';
 let trendDays = 30;
 let trendPoints = [];
+const APP_STATE_KEY = 'logistics_workbench_state_v1';
+let saveTimer = null;
+let cloudFileHandle = null;
+let lastSavedAt = '';
 
 const TRUCK_DATA = [
     { model: '面包车', size: '1.8 × 1.3 × 1.2 m', volume: '约 2-3 m3', weight: '约 0.5 吨', usage: '同城小件、急件、样品件' },
@@ -551,6 +763,112 @@ const SHIPPING_DATA = [
     }
 ];
 
+const PORT_CODE_DATA = [
+    { code: 'PVG', type: '机场', name: '上海浦东国际机场', country: '中国' },
+    { code: 'SHA', type: '机场', name: '上海虹桥国际机场', country: '中国' },
+    { code: 'CAN', type: '机场', name: '广州白云国际机场', country: '中国' },
+    { code: 'SZX', type: '机场', name: '深圳宝安国际机场', country: '中国' },
+    { code: 'NRT', type: '机场', name: '东京成田国际机场', country: '日本' },
+    { code: 'HND', type: '机场', name: '东京羽田机场', country: '日本' },
+    { code: 'KIX', type: '机场', name: '大阪关西国际机场', country: '日本' },
+    { code: 'ICN', type: '机场', name: '仁川国际机场', country: '韩国' },
+    { code: 'GMP', type: '机场', name: '金浦国际机场', country: '韩国' },
+    { code: 'SIN', type: '机场', name: '新加坡樟宜机场', country: '新加坡' },
+    { code: 'LAX', type: '机场', name: '洛杉矶国际机场', country: '美国' },
+    { code: 'JFK', type: '机场', name: '纽约肯尼迪国际机场', country: '美国' },
+    { code: 'ORD', type: '机场', name: '芝加哥奥黑尔国际机场', country: '美国' },
+    { code: 'CNSHA', type: '港口', name: '上海港', country: '中国' },
+    { code: 'CNNGB', type: '港口', name: '宁波港', country: '中国' },
+    { code: 'CNSZX', type: '港口', name: '深圳港', country: '中国' },
+    { code: 'JPTYO', type: '港口', name: '东京港', country: '日本' },
+    { code: 'JPUKB', type: '港口', name: '神户港', country: '日本' },
+    { code: 'KRINC', type: '港口', name: '仁川港', country: '韩国' },
+    { code: 'KRPUS', type: '港口', name: '釜山港', country: '韩国' },
+    { code: 'SGSIN', type: '港口', name: '新加坡港', country: '新加坡' },
+    { code: 'USLAX', type: '港口', name: '洛杉矶港', country: '美国' },
+    { code: 'USLGB', type: '港口', name: '长滩港', country: '美国' },
+    { code: 'USNYC', type: '港口', name: '纽约/新泽西港', country: '美国' }
+];
+
+const INCOTERM_DATA = [
+    { term: 'EXW', owner: '买方负责提货后绝大部分费用和风险', note: '卖方只负责备货，最偏卖方术语' },
+    { term: 'FOB', owner: '卖方负责出口清关并装上船，海运后买方负责', note: '海运最常见，适合整柜/散货出口' },
+    { term: 'CIF', owner: '卖方负责海运和保险到目的港，进口后买方负责', note: '海运常见，但目的港费用通常不含' },
+    { term: 'DAP', owner: '卖方负责运输到指定地点，进口税费通常买方负责', note: '适合门到门但不包税' },
+    { term: 'DDP', owner: '卖方负责运输、清关和税费直到交货', note: '最偏买方体验，但卖方责任最重' }
+];
+
+const SENSITIVE_CARGO_RULES = {
+    '带电池': {
+        docs: ['MSDS', 'UN38.3', '电池规格书'],
+        risks: ['确认电池类型（内置/配套/纯电）', '确认是否需要危包或特殊标签']
+    },
+    '液体': {
+        docs: ['MSDS', '成分说明', '运输鉴定或非危声明（视品类）'],
+        risks: ['确认是否易燃、腐蚀', '注意包装防漏和航空限制']
+    },
+    '粉末': {
+        docs: ['MSDS', '成分说明', '运输鉴定（视渠道）'],
+        risks: ['粉末类容易触发额外安检', '需确认是否涉及化工品或食品类监管']
+    },
+    '磁性': {
+        docs: ['磁检报告'],
+        risks: ['空运前通常要确认磁性是否超标', '包装方式会影响检测结果']
+    },
+    '食品': {
+        docs: ['成分表', '标签信息', '原产地/卫生类资料（按国家要求）'],
+        risks: ['确认目的国准入和标签规范', '注意保质期和温控需求']
+    },
+    '化妆品': {
+        docs: ['成分表', 'MSDS（部分渠道）', '品牌/备案资料（按国家要求）'],
+        risks: ['注意液体、膏体、酒精含量', '目的国可能要求备案或标签审核']
+    },
+    '木制品': {
+        docs: ['熏蒸证明（如适用）', '材质说明'],
+        risks: ['确认是否为实木/原木', '部分国家对木质包装和木制成品要求严格']
+    },
+    '品牌货': {
+        docs: ['品牌授权书', '采购凭证/销售链路证明'],
+        risks: ['注意知识产权和海关扣货风险', '渠道不同对品牌审核要求差异大']
+    }
+};
+
+const PORT_RECOMMENDATION_RULES = [
+    { keywords: ['福州', '福建'], primary: '福州港', secondary: '厦门港', reason: '福州就近拖柜方便，但福州港部分航线偏港；厦门港通常主干航线更密、运价更有竞争力。' },
+    { keywords: ['厦门', '泉州', '漳州'], primary: '厦门港', secondary: '福州港', reason: '厦门港是福建主力出口港之一，航线成熟；若舱位紧张可考虑福州港。' },
+    { keywords: ['宁波', '绍兴', '台州', '义乌', '金华'], primary: '宁波港', secondary: '上海港', reason: '宁波港就近且航线丰富；上海港作为备选，班次更多但拖车半径可能更远。' },
+    { keywords: ['上海', '苏州', '昆山', '无锡', '常州', '南通'], primary: '上海港', secondary: '宁波港', reason: '上海港主干线和舱位最丰富；若价格或舱位不理想，可比较宁波港。' },
+    { keywords: ['青岛', '潍坊', '烟台', '威海', '临沂'], primary: '青岛港', secondary: '烟台港', reason: '青岛港主线覆盖广；鲁东区域也可比较烟台港。' },
+    { keywords: ['天津', '北京', '廊坊', '唐山', '保定'], primary: '天津港', secondary: '青岛港', reason: '天津港是华北主力出口港；部分航线也可比较青岛港。' },
+    { keywords: ['大连', '沈阳', '长春', '哈尔滨'], primary: '大连港', secondary: '营口港', reason: '东北区域通常优先大连港；辽宁中部货源也可比较营口港。' },
+    { keywords: ['深圳', '东莞', '惠州', '佛山', '中山', '珠海'], primary: '深圳港', secondary: '南沙港', reason: '深圳港就近且船期密；广州南沙港常作为价格和舱位备选。' },
+    { keywords: ['广州', '番禺', '顺德', '肇庆', '清远'], primary: '南沙港', secondary: '深圳港', reason: '广州及珠江西岸常优先南沙港；若主线价格更优可比较深圳港。' },
+    { keywords: ['汕头', '揭阳', '潮州'], primary: '汕头港', secondary: '深圳港', reason: '粤东就近可走汕头；主干航线和成本综合可比较深圳港。' },
+    { keywords: ['武汉', '宜昌', '荆州'], primary: '上海港', secondary: '宁波港', reason: '长江流域多通过江海联运衔接上海港；宁波港可作为班次或价格备选。' },
+    { keywords: ['重庆', '成都', '绵阳', '德阳'], primary: '上海港', secondary: '深圳港', reason: '西南货源常通过铁路/江海联运衔接上海；华南方向也会比较深圳港。' }
+];
+
+const DESTINATION_PORT_RULES = [
+    { keywords: ['东京', '千叶', '埼玉', '神奈川', '横滨', '川崎'], primary: '东京港', secondary: '横滨港', reason: '关东收货地址通常优先东京港，若班期或成本更优可比较横滨港。' },
+    { keywords: ['大阪', '京都', '兵库', '神户', '奈良'], primary: '大阪港', secondary: '神户港', reason: '关西区域多优先大阪港，神户港常作为就近且成熟的备选。' },
+    { keywords: ['名古屋', '爱知', '岐阜', '三重'], primary: '名古屋港', secondary: '大阪港', reason: '中部区域优先名古屋港，若主线/价格不理想可比较关西主港。' },
+    { keywords: ['福冈', '熊本', '大分', '佐贺', '长崎'], primary: '博多港', secondary: '门司港', reason: '九州区域优先博多港，北九州方向可比较门司港。' },
+    { keywords: ['釜山', '大邱', '蔚山', '庆尚'], primary: '釜山港', secondary: '仁川港', reason: '韩国东南部和全国主干多优先釜山港；若是首都圈项目也可比较仁川港。' },
+    { keywords: ['首尔', '仁川', '京畿', '水原'], primary: '仁川港', secondary: '釜山港', reason: '韩国首都圈优先仁川港，若船期或干线优势更明显也会比较釜山港。' },
+    { keywords: ['新加坡'], primary: '新加坡港', secondary: '巴西班让港区', reason: '新加坡收货通常直接走新加坡主港，具体靠泊点由船司安排。' },
+    { keywords: ['洛杉矶', '长滩', '加州', '圣地亚哥', '拉斯维加斯', '凤凰城'], primary: '洛杉矶/长滩港', secondary: '奥克兰港', reason: '美国西海岸和西南内陆多优先洛杉矶/长滩港，北加项目可比较奥克兰港。' },
+    { keywords: ['纽约', '新泽西', '波士顿', '费城', '巴尔的摩', '华盛顿'], primary: '纽约/新泽西港', secondary: '萨凡纳港', reason: '美国东北和中大西洋区域优先纽约/新泽西港，若船期和成本更合适可比较萨凡纳港。' },
+    { keywords: ['芝加哥', '底特律', '克利夫兰', '哥伦布', '明尼阿波利斯'], primary: '纽约/新泽西港', secondary: '洛杉矶/长滩港', reason: '美国中西部常比较美东与美西双通道，需结合内陆转运成本综合判断。' },
+    { keywords: ['休斯敦', '达拉斯', '奥斯汀', '圣安东尼奥'], primary: '休斯敦港', secondary: '洛杉矶/长滩港', reason: '德州项目通常优先休斯敦港；若走美西再内陆派送更经济，也可比较美西港。' }
+];
+
+const BOOKING_CARRIER_RULES = [
+    { match: ['日本', '东京', '大阪', '神户', '横滨'], cost: ['MSC', 'EMC', 'COSCO'], speed: ['ONE', 'MSC', 'EMC'], balanced: ['ONE', 'COSCO', 'MSC'] },
+    { match: ['韩国', '首尔', '釜山', '仁川'], cost: ['HMM', 'MSC', 'COSCO'], speed: ['HMM', 'ONE', 'MSC'], balanced: ['HMM', 'COSCO', 'MSC'] },
+    { match: ['新加坡'], cost: ['PIL', 'MSC', 'CMA CGM'], speed: ['CMA CGM', 'MSC', 'PIL'], balanced: ['PIL', 'CMA CGM', 'MSC'] },
+    { match: ['美国', '洛杉矶', '长滩', '纽约', '新泽西', '休斯敦', '芝加哥'], cost: ['MSC', 'CMA CGM', 'COSCO'], speed: ['Matson', 'ZIM', 'Maersk'], balanced: ['Maersk', 'CMA CGM', 'MSC'] }
+];
+
 const PREFS = [
     '北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県',
     '茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県',
@@ -561,13 +879,34 @@ const PREFS = [
     '福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県'
 ];
 
-window.onload = () => { initRates(); renderContainerTable(); renderShippingTable(); renderTruckTable(); renderJpTruckTable(); renderKrTruckTable(); renderSgTruckTable(); renderUsTruckTable(); changeCountry(); loadJpyTrend(30); };
+window.onload = () => {
+    initRates();
+    restoreAppState();
+    renderContainerTable();
+    renderShippingTable();
+    renderTruckTable();
+    renderJpTruckTable();
+    renderKrTruckTable();
+    renderSgTruckTable();
+    renderUsTruckTable();
+    renderIncotermTable();
+    renderPortSearch();
+    renderGlobalSearch();
+    loadShipmentNotes();
+    loadDashboardTodos();
+    changeCountry();
+    loadJpyTrend(30);
+    initTimezoneInput();
+    updateDashboard();
+    initAutoSave();
+    updateStorageStatus();
+};
 
 function switchTab(idx) {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.querySelectorAll('.tab-item').forEach(i => i.classList.remove('active'));
     document.getElementById('tab' + idx).classList.add('active');
-    const order = {3: 0, 4: 1, 6: 2, 7: 3, 8: 4};
+    const order = {9: 0, 3: 1, 4: 2, 6: 3, 7: 4, 8: 5};
     document.querySelectorAll('.tab-item')[order[idx]].classList.add('active');
     if(idx === 4) initCalendar();
     if(idx === 7) renderContainerTable();
@@ -578,6 +917,11 @@ function switchTab(idx) {
         renderKrTruckTable();
         renderSgTruckTable();
         renderUsTruckTable();
+    }
+    if(idx === 9) {
+        renderGlobalSearch();
+        renderPortSearch();
+        renderIncotermTable();
     }
     if(idx === 3 && !trendPoints.length) loadJpyTrend(trendDays);
 }
@@ -635,6 +979,7 @@ function convertRate(dir) {
 function setRateStatus(msg) {
     const el = document.getElementById('rate-status');
     if (el) el.innerText = msg;
+    updateDashboard();
 }
 
 function convertTriple(src) {
@@ -845,6 +1190,8 @@ function initCalendar() {
                 if(!n.trim()) delete memos[key];
                 else memos[key]=n;
                 localStorage.setItem('hcn_calendar_memos', JSON.stringify(memos));
+                queueSaveAppState();
+                updateStorageStatus();
                 initCalendar();
             }
         };
@@ -1578,6 +1925,565 @@ function renderFcResult() {
             <div>10t：¥${currentFc.jpy10.toLocaleString()}（含税¥${Math.round(currentFc.jpy10 * 1.1).toLocaleString()}） → ${toCny(currentFc.jpy10)} CNY</div>
         </div>
     `;
+}
+
+function calcVolumetric() {
+    const raw = document.getElementById('vol-size').value.trim().replace(/[xX*]/g, ' ');
+    const parts = raw.split(/\s+/).map(Number).filter(Boolean);
+    const qty = parseFloat(document.getElementById('vol-qty').value || '0');
+    const actual = parseFloat(document.getElementById('vol-actual').value || '0');
+    const divisor = parseFloat(document.getElementById('vol-divisor').value || '6000');
+    const box = document.getElementById('vol-result');
+    if (parts.length !== 3 || !qty) {
+        box.innerText = '请输入完整的长宽高和件数';
+        return;
+    }
+    const [l, w, h] = parts;
+    const volumeCm = l * w * h * qty;
+    const volumeM3 = volumeCm / 1000000;
+    const volumetric = volumeCm / divisor;
+    const chargeable = Math.max(actual, volumetric);
+    box.innerText = `总体积：${volumeM3.toFixed(3)} m3\n材积重：${volumetric.toFixed(2)} kg\n实际重：${actual.toFixed(2)} kg\n计费重：${chargeable.toFixed(2)} kg`;
+}
+
+function calcContainerFit() {
+    const cbm = parseFloat(document.getElementById('cbm-total').value || '0');
+    const kg = parseFloat(document.getElementById('cbm-weight').value || '0');
+    const candidates = CONTAINER_DATA.filter(row => row.vol !== '—').map(row => ({
+        name: row.typeZh,
+        vol: parseFloat(String(row.vol).replace(/[^\d.]/g, '')) || 0,
+        payload: parseFloat(String(row.payload).replace(/[^\d.]/g, '').replace(',', '')) || 0
+    }));
+    const matched = candidates.filter(row => cbm <= row.vol && kg <= row.payload);
+    const box = document.getElementById('cbm-result');
+    if (!cbm) {
+        box.innerText = '请输入总方数';
+        return;
+    }
+    if (!matched.length) {
+        box.innerText = '当前方数/重量可能超过单柜常规范围，建议拆柜或核对特种柜方案';
+        return;
+    }
+    box.innerText = `推荐优先：${matched[0].name}\n可选柜型：${matched.map(x => x.name).join(' / ')}\n输入：${cbm.toFixed(2)} m3，${kg.toFixed(0)} kg`;
+}
+
+function recommendTruck() {
+    const country = document.getElementById('truck-country').value;
+    const vol = parseFloat(document.getElementById('truck-vol').value || '0');
+    const kg = parseFloat(document.getElementById('truck-kg').value || '0');
+    const datasets = { CN: TRUCK_DATA, JP: JP_TRUCK_DATA, KR: KR_TRUCK_DATA, SG: SG_TRUCK_DATA, US: US_TRUCK_DATA };
+    const data = datasets[country] || [];
+    const candidates = data.map(item => ({
+        ...item,
+        maxVol: parseFloat(String(item.volume).replace(/[^\d.]/g, '')) || 0,
+        maxKg: (parseFloat(String(item.weight).replace(/[^\d.]/g, '')) || 0) * 1000
+    })).filter(item => vol <= item.maxVol && kg <= item.maxKg);
+    const box = document.getElementById('truck-rec-result');
+    if (!vol) {
+        box.innerText = '请输入总体积';
+        return;
+    }
+    if (!candidates.length) {
+        box.innerText = '未找到直接匹配车型，建议提高车型级别或拆单配送';
+        return;
+    }
+    const best = candidates[0];
+    box.innerText = `推荐车型：${best.model}\n尺寸：${best.size}\n参考方数：${best.volume}\n参考载重：${best.weight}\n用途：${best.usage}`;
+}
+
+function initTimezoneInput() {
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    const input = document.getElementById('tz-cn');
+    if (input && !input.value) input.value = local;
+}
+
+function convertTimezones() {
+    const value = document.getElementById('tz-cn').value;
+    const box = document.getElementById('tz-result');
+    if (!value) {
+        box.innerText = '请选择中国时间';
+        return;
+    }
+    const date = new Date(value);
+    const map = [
+        ['中国', 'Asia/Shanghai'],
+        ['日本', 'Asia/Tokyo'],
+        ['韩国', 'Asia/Seoul'],
+        ['新加坡', 'Asia/Singapore'],
+        ['美国西部', 'America/Los_Angeles'],
+        ['美国东部', 'America/New_York']
+    ];
+    box.innerText = map.map(([label, tz]) => `${label}：${date.toLocaleString('zh-CN', { timeZone: tz, hour12: false })}`).join('\n');
+}
+
+function renderIncotermTable() {
+    const body = document.getElementById('incoterm-table-body');
+    if (!body) return;
+    body.innerHTML = '';
+    INCOTERM_DATA.forEach((row, idx) => {
+        const bg = idx % 2 === 1 ? 'background:#f7fbff;' : '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">${row.term}</td>
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">${row.owner}</td>
+            <td style="padding:8px; border:1px solid #e6efe0; ${bg}">${row.note}</td>
+        `;
+        body.appendChild(tr);
+    });
+}
+
+function renderPortSearch() {
+    const q = (document.getElementById('port-search')?.value || '').trim().toLowerCase();
+    const box = document.getElementById('port-search-results');
+    if (!box) return;
+    const data = PORT_CODE_DATA.filter(row => !q || [row.code, row.type, row.name, row.country].join(' ').toLowerCase().includes(q));
+    box.innerHTML = data.slice(0, 12).map(item => `
+        <div class="result-item">
+            <div class="result-title">${item.code} · ${item.name}</div>
+            <div>${item.type} · ${item.country}</div>
+        </div>
+    `).join('') || '<div class="result-item">未找到结果</div>';
+}
+
+function renderGlobalSearch() {
+    const q = (document.getElementById('global-search')?.value || '').trim().toLowerCase();
+    const box = document.getElementById('global-search-results');
+    if (!box) return;
+    if (!q) {
+        box.innerHTML = '<div class="tool-result">可搜索：仓库代码、船司、柜型、货车型号、港口机场代码</div>';
+        return;
+    }
+    const results = [];
+    FC_DATA.forEach(item => { if ([item.code, item.name, item.address].join(' ').toLowerCase().includes(q)) results.push(`仓库：${item.code} ${item.name}`); });
+    CONTAINER_DATA.forEach(item => { if ([item.typeZh, item.typeEn, item.remarkZh].join(' ').toLowerCase().includes(q)) results.push(`柜型：${item.typeZh}`); });
+    SHIPPING_DATA.forEach(item => { if ([item.name, item.country, item.background].join(' ').toLowerCase().includes(q)) results.push(`船司：${item.name}`); });
+    [...TRUCK_DATA, ...JP_TRUCK_DATA, ...KR_TRUCK_DATA, ...SG_TRUCK_DATA, ...US_TRUCK_DATA].forEach(item => {
+        if ([item.model, item.size, item.usage].join(' ').toLowerCase().includes(q)) results.push(`货车：${item.model}`);
+    });
+    PORT_CODE_DATA.forEach(item => { if ([item.code, item.name, item.country].join(' ').toLowerCase().includes(q)) results.push(`代码：${item.code} ${item.name}`); });
+    box.innerHTML = results.slice(0, 20).map(item => `<div class="result-item">${item}</div>`).join('') || '<div class="result-item">未找到匹配内容</div>';
+}
+
+function checkSensitiveCargo() {
+    const checked = Array.from(document.querySelectorAll('.check-grid input:checked')).map(el => el.value);
+    const box = document.getElementById('sensitive-result');
+    if (!checked.length) {
+        box.innerText = '当前未勾选敏感项，按普通货初步判断；正式出货前仍建议复核。';
+        return;
+    }
+    const docs = new Set();
+    const risks = [];
+
+    checked.forEach(item => {
+        const rule = SENSITIVE_CARGO_RULES[item];
+        if (!rule) return;
+        (rule.docs || []).forEach(doc => docs.add(doc));
+        (rule.risks || []).forEach(risk => risks.push(`${item}：${risk}`));
+    });
+
+    box.innerText = [
+        `已勾选：${checked.join('、')}`,
+        `建议资料：${Array.from(docs).join('、') || '请人工确认'}`,
+        `重点提醒：${risks.join('；') || '请结合具体货物再确认'}`
+    ].join('\n');
+}
+
+function calcFees() {
+    const ids = ['ocean', 'truck', 'customs', 'dest-port', 'clearance', 'delivery'];
+    const labels = {
+        ocean: '海运费+国内港杂',
+        truck: '拖车费',
+        customs: '报关费',
+        'dest-port': '目的港杂',
+        clearance: '清关费',
+        delivery: '派送费'
+    };
+    let total = 0;
+    const lines = ids.map(id => {
+        const val = parseFloat(document.getElementById(`fee-${id}`).value || '0');
+        total += val;
+        return `${labels[id]}：${val.toFixed(2)}`;
+    });
+    lines.push(`总计：${total.toFixed(2)}`);
+    document.getElementById('fee-result').innerText = lines.join('\n');
+}
+
+function saveShipmentNotes() {
+    const value = document.getElementById('shipment-notes').value;
+    localStorage.setItem('shipment_notes_v1', value);
+    queueSaveAppState();
+    updateStorageStatus();
+    showToast('记录已保存');
+}
+
+function loadShipmentNotes() {
+    const value = localStorage.getItem('shipment_notes_v1') || '';
+    const box = document.getElementById('shipment-notes');
+    if (box) box.value = value;
+}
+
+function copyToolResult(id) {
+    const el = document.getElementById(id);
+    if (el) copyText(el.innerText);
+}
+
+function updateDashboard() {
+    const rateEl = document.getElementById('dashboard-rates-info');
+    if (rateEl) {
+        if (rates.CNY && rates.JPY && rates.USD) {
+            const jpyCny = (rates.CNY / rates.JPY).toFixed(4);
+            const usdCny = (rates.CNY / rates.USD).toFixed(4);
+            rateEl.innerText = `JPY→CNY ${jpyCny} | USD→CNY ${usdCny}`;
+        } else {
+            rateEl.innerText = '汇率加载中...';
+        }
+    }
+
+    const titleEl = document.getElementById('dashboard-holiday-title');
+    const infoEl = document.getElementById('dashboard-holiday-info');
+    if (titleEl && infoEl) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth() + 1;
+        const upcoming = [];
+        const days = new Date(year, month, 0).getDate();
+        for (let d = now.getDate(); d <= days; d++) {
+            const holiday = getHolidayInfo(year, month, d);
+            const market = getMarketClosures(year, month, d);
+            if (holiday) upcoming.push(`${month}/${d} ${holiday.name}`);
+            if (market.length) market.forEach(item => upcoming.push(`${month}/${d} ${item.label}`));
+            if (upcoming.length >= 3) break;
+        }
+        titleEl.innerText = upcoming.length ? '本月节假/休市' : '本月平稳';
+        infoEl.innerText = upcoming.length ? upcoming.join(' | ') : '本月暂无更多节假或休市提醒';
+    }
+}
+
+function loadDashboardTodos() {
+    const raw = localStorage.getItem('dashboard_todos_v1');
+    const todos = raw ? JSON.parse(raw) : [];
+    renderDashboardTodos(todos);
+}
+
+function saveDashboardTodos(todos) {
+    localStorage.setItem('dashboard_todos_v1', JSON.stringify(todos));
+    renderDashboardTodos(todos);
+    queueSaveAppState();
+    updateStorageStatus();
+}
+
+function addDashboardTodo() {
+    const input = document.getElementById('dashboard-todo-input');
+    const text = (input?.value || '').trim();
+    if (!text) return;
+    const raw = localStorage.getItem('dashboard_todos_v1');
+    const todos = raw ? JSON.parse(raw) : [];
+    todos.unshift({ id: Date.now(), text, done: false });
+    saveDashboardTodos(todos);
+    input.value = '';
+}
+
+function toggleDashboardTodo(id) {
+    const raw = localStorage.getItem('dashboard_todos_v1');
+    const todos = raw ? JSON.parse(raw) : [];
+    const next = todos.map(item => item.id === id ? { ...item, done: !item.done } : item);
+    saveDashboardTodos(next);
+}
+
+function removeDashboardTodo(id) {
+    const raw = localStorage.getItem('dashboard_todos_v1');
+    const todos = raw ? JSON.parse(raw) : [];
+    saveDashboardTodos(todos.filter(item => item.id !== id));
+}
+
+function renderDashboardTodos(todos) {
+    const box = document.getElementById('dashboard-todo-list');
+    if (!box) return;
+    if (!todos.length) {
+        box.innerHTML = '<div class="tool-result">暂无待办，可把订舱、拖车、报关、派送提醒放这里。</div>';
+        return;
+    }
+    box.innerHTML = todos.slice(0, 8).map(item => `
+        <div class="todo-item">
+            <div class="todo-left">
+                <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleDashboardTodo(${item.id})">
+                <span class="${item.done ? 'todo-done' : ''}">${item.text}</span>
+            </div>
+            <button class="btn-main" style="background:#95a5a6; padding:4px 8px; font-size:12px; width:auto;" onclick="removeDashboardTodo(${item.id})">删除</button>
+        </div>
+    `).join('');
+}
+
+function initAutoSave() {
+    document.addEventListener('input', handleAutoSaveEvent, true);
+    document.addEventListener('change', handleAutoSaveEvent, true);
+}
+
+function handleAutoSaveEvent(event) {
+    const target = event.target;
+    if (!target || !target.id) return;
+    if (target.id === 'state-import-file') return;
+    queueSaveAppState();
+}
+
+function queueSaveAppState() {
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+        saveAppStateToLocal();
+        updateStorageStatus();
+    }, 400);
+}
+
+function gatherAppState() {
+    const controls = {};
+    document.querySelectorAll('input[id], select[id], textarea[id]').forEach(el => {
+        if (el.type === 'file') return;
+        if (el.type === 'checkbox') controls[el.id] = el.checked;
+        else controls[el.id] = el.value;
+    });
+    return {
+        version: 1,
+        savedAt: new Date().toISOString(),
+        controls,
+        memos,
+        shipmentNotes: document.getElementById('shipment-notes')?.value || '',
+        dashboardTodos: JSON.parse(localStorage.getItem('dashboard_todos_v1') || '[]')
+    };
+}
+
+function saveAppStateToLocal() {
+    const state = gatherAppState();
+    localStorage.setItem(APP_STATE_KEY, JSON.stringify(state));
+    lastSavedAt = state.savedAt;
+}
+
+function saveAppStateNow() {
+    saveAppStateToLocal();
+    updateStorageStatus();
+    showToast('本地数据已保存');
+}
+
+function restoreAppState() {
+    const raw = localStorage.getItem(APP_STATE_KEY);
+    if (!raw) return;
+    try {
+        const state = JSON.parse(raw);
+        applyAppState(state);
+        lastSavedAt = state.savedAt || '';
+    } catch (e) {}
+}
+
+function applyAppState(state) {
+    if (!state || !state.controls) return;
+    Object.entries(state.controls).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (el.type === 'file') return;
+        if (el.type === 'checkbox') el.checked = !!value;
+        else el.value = value;
+    });
+    if (state.memos && typeof state.memos === 'object') {
+        memos = state.memos;
+        localStorage.setItem('hcn_calendar_memos', JSON.stringify(memos));
+    }
+    if (typeof state.shipmentNotes === 'string') {
+        localStorage.setItem('shipment_notes_v1', state.shipmentNotes);
+    }
+    if (Array.isArray(state.dashboardTodos)) {
+        localStorage.setItem('dashboard_todos_v1', JSON.stringify(state.dashboardTodos));
+    }
+}
+
+function exportAppState() {
+    const state = gatherAppState();
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `logistics-workbench-${formatDate(new Date())}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+    showToast('已导出 JSON');
+}
+
+function triggerImportState() {
+    const input = document.getElementById('state-import-file');
+    if (input) input.click();
+}
+
+function importAppStateFromFile(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        try {
+            const state = JSON.parse(reader.result);
+            applyAppState(state);
+            saveAppStateToLocal();
+            renderDashboardTodos(JSON.parse(localStorage.getItem('dashboard_todos_v1') || '[]'));
+            loadShipmentNotes();
+            renderGlobalSearch();
+            renderPortSearch();
+            renderContainerTable();
+            renderShippingTable();
+            renderTruckTable();
+            renderJpTruckTable();
+            renderKrTruckTable();
+            renderSgTruckTable();
+            renderUsTruckTable();
+            initCalendar();
+            updateDashboard();
+            updateStorageStatus();
+            showToast('已导入数据');
+        } catch (e) {
+            showToast('导入失败');
+        }
+        event.target.value = '';
+    };
+    reader.readAsText(file, 'utf-8');
+}
+
+async function bindCloudFile() {
+    if (!window.showSaveFilePicker) {
+        showToast('当前浏览器不支持云端文件绑定');
+        return;
+    }
+    try {
+        cloudFileHandle = await window.showSaveFilePicker({
+            suggestedName: 'logistics-workbench-data.json',
+            types: [{ description: 'JSON Files', accept: { 'application/json': ['.json'] } }]
+        });
+        updateStorageStatus();
+        showToast('已绑定文件，可放在 iCloud Drive');
+    } catch (e) {}
+}
+
+async function syncToCloudFile() {
+    if (!cloudFileHandle) {
+        showToast('请先绑定文件');
+        return;
+    }
+    try {
+        const writable = await cloudFileHandle.createWritable();
+        await writable.write(JSON.stringify(gatherAppState(), null, 2));
+        await writable.close();
+        lastSavedAt = new Date().toISOString();
+        updateStorageStatus();
+        showToast('已同步到文件');
+    } catch (e) {
+        showToast('同步失败');
+    }
+}
+
+function clearCloudBinding() {
+    cloudFileHandle = null;
+    updateStorageStatus();
+    showToast('已清除云端绑定');
+}
+
+function updateStorageStatus() {
+    const el = document.getElementById('storage-status');
+    if (!el) return;
+    const localState = localStorage.getItem(APP_STATE_KEY);
+    const cloudName = cloudFileHandle ? cloudFileHandle.name : '未绑定';
+    let localInfo = '本地自动保存：未初始化';
+    if (localState) {
+        try {
+            const state = JSON.parse(localState);
+            localInfo = `本地自动保存：已启用\n最后保存：${formatReadableTime(state.savedAt || lastSavedAt)}`;
+        } catch (e) {
+            localInfo = '本地自动保存：已启用';
+        }
+    }
+    el.innerText = `${localInfo}\n云端文件：${cloudName}`;
+}
+
+function formatReadableTime(iso) {
+    if (!iso) return '未记录';
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return '未记录';
+    return date.toLocaleString('zh-CN', { hour12: false });
+}
+
+function resolveOriginPort(address) {
+    const rule = PORT_RECOMMENDATION_RULES.find(item => item.keywords.some(key => address.includes(key)));
+    if (!rule) {
+        return {
+            primary: '需人工判断',
+            secondary: '比较最近主港与邻近主干港',
+            reason: '未命中内置起运地规则，建议先比较拖车费、港杂费、船期和实际海运费。'
+        };
+    }
+    return rule;
+}
+
+function resolveDestinationPort(address) {
+    const rule = DESTINATION_PORT_RULES.find(item => item.keywords.some(key => address.includes(key)));
+    if (!rule) {
+        return {
+            primary: '需人工判断',
+            secondary: '比较最近主港与常见主干港',
+            reason: '未命中内置目的地规则，建议结合清关便利性、末端派送距离和船期判断。'
+        };
+    }
+    return rule;
+}
+
+function runBookingAdvisor() {
+    const origin = (document.getElementById('booking-origin').value || '').trim();
+    const destination = (document.getElementById('booking-destination').value || '').trim();
+    const container = document.getElementById('booking-container').value;
+    const weight = parseFloat(document.getElementById('booking-weight').value || '0');
+    const priority = document.getElementById('booking-priority').value;
+    const note = (document.getElementById('booking-note').value || '').trim();
+    const box = document.getElementById('booking-result');
+
+    if (!origin || !destination) {
+        box.innerText = '请输入起运地址和目的收货地址';
+        return;
+    }
+
+    const originRule = resolveOriginPort(origin);
+    const destRule = resolveDestinationPort(destination);
+    const carriers = getCarrierSuggestions(destination, priority);
+    const strategy = priority === 'cost'
+        ? '成本优先：主看主港/干线港的海运费、港杂费和舱位弹性'
+        : priority === 'speed'
+            ? '时效优先：优先直达或快线，免柜期通常更紧，需更早锁舱'
+            : '平衡型：在海运费、拖车费、船期稳定性之间做综合比较';
+
+    const checks = [
+        '比较主推荐港与备选港的拖车费和港杂费',
+        '确认船司放舱节奏、截关时间、免柜期',
+        '核对目的港清关便利性与末端派送距离',
+        '根据柜型和重量确认是否有重柜/偏港附加费风险'
+    ];
+
+    box.innerText = [
+        `起运地址：${origin}`,
+        `目的地址：${destination}`,
+        `柜型/重量：${container} / ${weight.toFixed(0)} kg`,
+        `时效偏好：${priority === 'cost' ? '成本优先' : priority === 'speed' ? '时效优先' : '平衡成本与时效'}`,
+        `建议出口港：${originRule.primary}`,
+        `出口港备选：${originRule.secondary}`,
+        `建议目的港：${destRule.primary}`,
+        `目的港备选：${destRule.secondary}`,
+        `推荐逻辑：起运地 ${originRule.reason} | 目的地 ${destRule.reason}`,
+        `建议船司：${carriers.join(' / ')}`,
+        `策略建议：${strategy}`,
+        `操作检查：${checks.join('；')}${note ? `\n补充备注：${note}` : ''}`,
+        '提示：这是规则型订舱助手，适合前期判断；正式订舱前仍建议核对实时海运费、拖车费、港杂费、船期和免柜期。'
+    ].join('\n');
+}
+
+function getCarrierSuggestions(destination, priority) {
+    const matched = BOOKING_CARRIER_RULES.find(item => item.match.some(key => destination.includes(key)));
+    if (!matched) {
+        return priority === 'speed' ? ['Maersk', 'CMA CGM', 'MSC'] : priority === 'cost' ? ['MSC', 'COSCO', 'EMC'] : ['MSC', 'Maersk', 'COSCO'];
+    }
+    return matched[priority] || matched.balanced;
 }
 </script>
 </body>
