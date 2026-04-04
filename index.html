@@ -458,6 +458,15 @@
 
     <div class="module-card">
         <div class="title">高频计算</div>
+        <div class="row">
+            <label>智能识别输入</label>
+            <textarea id="smart-calc-input" rows="3" placeholder="可直接输入：60*40*50cm，12箱，实重180kg，发日本；或 12方 8吨 美国派送；或 体积25CBM 重量12000kg 中国"></textarea>
+        </div>
+        <div style="display:flex; gap:10px; margin-bottom:12px;">
+            <button class="btn-main" style="background:#4a90e2; flex:1;" onclick="smartFillHighFreqCalc()">智能识别</button>
+            <button class="btn-main" style="background:#95a5a6; flex:1;" onclick="clearSmartCalcInput()">清空</button>
+        </div>
+        <div id="smart-calc-result" class="tool-result" style="margin-bottom:12px;"></div>
         <div class="tool-grid">
             <div class="compact-tool">
                 <div class="title-mini">材积重计算</div>
@@ -853,32 +862,60 @@ const SENSITIVE_KEYWORDS = {
 };
 
 const PORT_RECOMMENDATION_RULES = [
-    { keywords: ['福州', '福建'], primary: '福州港', secondary: '厦门港', reason: '福州就近拖柜方便，但福州港部分航线偏港；厦门港通常主干航线更密、运价更有竞争力。' },
-    { keywords: ['厦门', '泉州', '漳州'], primary: '厦门港', secondary: '福州港', reason: '厦门港是福建主力出口港之一，航线成熟；若舱位紧张可考虑福州港。' },
-    { keywords: ['宁波', '绍兴', '台州', '义乌', '金华'], primary: '宁波港', secondary: '上海港', reason: '宁波港就近且航线丰富；上海港作为备选，班次更多但拖车半径可能更远。' },
-    { keywords: ['上海', '苏州', '昆山', '无锡', '常州', '南通'], primary: '上海港', secondary: '宁波港', reason: '上海港主干线和舱位最丰富；若价格或舱位不理想，可比较宁波港。' },
-    { keywords: ['青岛', '潍坊', '烟台', '威海', '临沂'], primary: '青岛港', secondary: '烟台港', reason: '青岛港主线覆盖广；鲁东区域也可比较烟台港。' },
-    { keywords: ['天津', '北京', '廊坊', '唐山', '保定'], primary: '天津港', secondary: '青岛港', reason: '天津港是华北主力出口港；部分航线也可比较青岛港。' },
-    { keywords: ['大连', '沈阳', '长春', '哈尔滨'], primary: '大连港', secondary: '营口港', reason: '东北区域通常优先大连港；辽宁中部货源也可比较营口港。' },
+    { keywords: ['洋浦', '儋州', '澄迈', '海口', '海南'], primary: '洋浦港', secondary: '海口港', reason: '海南整柜出口通常优先洋浦港，主干线和政策配套更成熟；海口港可作为就近短驳和区域补充方案。' },
+    { keywords: ['防城港', '钦州', '北海', '南宁', '广西'], primary: '钦州港', secondary: '防城港', reason: '广西出运通常优先钦州港，集装箱主线更成熟；防城港适合部分区域和项目型货源。' },
+    { keywords: ['湛江'], primary: '湛江港', secondary: '南沙港', reason: '粤西货源可优先湛江港；若要比较主干航线和班次，常会同时看南沙港。' },
+    { keywords: ['茂名', '阳江', '江门'], primary: '南沙港', secondary: '深圳港', reason: '珠江西岸及粤西货源多数优先南沙港；若主线或船司资源更合适可比较深圳港。' },
     { keywords: ['深圳', '东莞', '惠州', '佛山', '中山', '珠海'], primary: '深圳港', secondary: '南沙港', reason: '深圳港就近且船期密；广州南沙港常作为价格和舱位备选。' },
-    { keywords: ['广州', '番禺', '顺德', '肇庆', '清远'], primary: '南沙港', secondary: '深圳港', reason: '广州及珠江西岸常优先南沙港；若主线价格更优可比较深圳港。' },
-    { keywords: ['汕头', '揭阳', '潮州'], primary: '汕头港', secondary: '深圳港', reason: '粤东就近可走汕头；主干航线和成本综合可比较深圳港。' },
-    { keywords: ['武汉', '宜昌', '荆州'], primary: '上海港', secondary: '宁波港', reason: '长江流域多通过江海联运衔接上海港；宁波港可作为班次或价格备选。' },
-    { keywords: ['重庆', '成都', '绵阳', '德阳'], primary: '上海港', secondary: '深圳港', reason: '西南货源常通过铁路/江海联运衔接上海；华南方向也会比较深圳港。' }
+    { keywords: ['广州', '番禺', '顺德', '肇庆', '清远', '韶关'], primary: '南沙港', secondary: '深圳港', reason: '广州及珠江西岸常优先南沙港；若主线价格更优可比较深圳港。' },
+    { keywords: ['汕头', '揭阳', '潮州', '梅州'], primary: '汕头港', secondary: '深圳港', reason: '粤东就近可走汕头；主干航线和成本综合可比较深圳港。' },
+    { keywords: ['厦门', '泉州', '漳州'], primary: '厦门港', secondary: '福州港', reason: '厦门港是福建主力出口港之一，航线成熟；若舱位紧张可考虑福州港。' },
+    { keywords: ['福州', '福建'], primary: '福州港', secondary: '厦门港', reason: '福州就近拖柜方便，但福州港部分航线偏港；厦门港通常主干航线更密、运价更有竞争力。' },
+    { keywords: ['温州'], primary: '宁波港', secondary: '上海港', reason: '温州货源通常优先比较宁波港；若主线或舱位优势明显可比上海港。' },
+    { keywords: ['宁波', '绍兴', '台州', '义乌', '金华'], primary: '宁波港', secondary: '上海港', reason: '宁波港就近且航线丰富；上海港作为备选，班次更多但拖车半径可能更远。' },
+    { keywords: ['杭州', '嘉兴', '湖州'], primary: '上海港', secondary: '宁波港', reason: '杭嘉湖区域常同时比较上海港和宁波港；若追求主线密度通常优先上海港。' },
+    { keywords: ['上海', '苏州', '昆山', '无锡', '常州', '南通'], primary: '上海港', secondary: '宁波港', reason: '上海港主干线和舱位最丰富；若价格或舱位不理想，可比较宁波港。' },
+    { keywords: ['连云港', '徐州', '宿迁', '淮安', '盐城'], primary: '连云港港', secondary: '上海港', reason: '苏北及连云港周边可优先连云港港；若主干航线不足可比较上海港。' },
+    { keywords: ['青岛', '潍坊', '临沂', '济南', '淄博'], primary: '青岛港', secondary: '日照港', reason: '山东中西部及胶东南线通常优先青岛港；大宗或区域项目也会比较日照港。' },
+    { keywords: ['烟台', '威海'], primary: '烟台港', secondary: '青岛港', reason: '胶东北部就近可走烟台港；若需更丰富主线则比较青岛港。' },
+    { keywords: ['日照'], primary: '日照港', secondary: '青岛港', reason: '鲁南货源可优先日照港；主线和综合服务可比较青岛港。' },
+    { keywords: ['天津', '北京', '廊坊', '唐山', '保定'], primary: '天津港', secondary: '青岛港', reason: '天津港是华北主力出口港；部分航线也可比较青岛港。' },
+    { keywords: ['石家庄', '邯郸', '邢台'], primary: '天津港', secondary: '青岛港', reason: '河北内陆货源通常优先天津港；若价格或船期更优可比较青岛港。' },
+    { keywords: ['秦皇岛'], primary: '天津港', secondary: '大连港', reason: '秦皇岛周边集装箱通常优先天津港；东北方向项目可比较大连港。' },
+    { keywords: ['大连'], primary: '大连港', secondary: '营口港', reason: '大连周边出口通常优先大连港；辽宁中部货源也可比较营口港。' },
+    { keywords: ['沈阳', '鞍山', '本溪', '抚顺', '辽阳'], primary: '营口港', secondary: '大连港', reason: '辽宁中部货源常优先营口港；若主线和班次更优可比较大连港。' },
+    { keywords: ['长春', '吉林', '哈尔滨', '齐齐哈尔', '牡丹江'], primary: '大连港', secondary: '营口港', reason: '东北腹地出口多数优先大连港；亦会根据铁路/公路成本比较营口港。' },
+    { keywords: ['武汉', '宜昌', '荆州', '襄阳'], primary: '上海港', secondary: '宁波港', reason: '长江流域多通过江海联运衔接上海港；宁波港可作为班次或价格备选。' },
+    { keywords: ['长沙', '株洲', '湘潭', '岳阳'], primary: '深圳港', secondary: '上海港', reason: '湖南货源常向华南口岸集拼，也会根据船期和拖车成本比较上海。' },
+    { keywords: ['南昌', '九江', '赣州'], primary: '厦门港', secondary: '深圳港', reason: '江西货源常比较厦门港与深圳港；赣南货源也会偏向深圳方向。' },
+    { keywords: ['郑州', '洛阳', '开封', '许昌'], primary: '青岛港', secondary: '上海港', reason: '河南货源常通过铁路/公路衔接青岛港；若南向或主线优势明显也会比较上海港。' },
+    { keywords: ['西安', '咸阳', '宝鸡'], primary: '青岛港', secondary: '上海港', reason: '西北货源常通过铁路联运衔接青岛港；若航线和时效更优也会比较上海港。' },
+    { keywords: ['重庆'], primary: '上海港', secondary: '深圳港', reason: '重庆多通过江海联运衔接上海港；若华南航线和船司资源更优可比较深圳港。' },
+    { keywords: ['成都', '绵阳', '德阳', '乐山'], primary: '深圳港', secondary: '上海港', reason: '四川货源常南下经深圳港，也会根据班期和联运成本比较上海港。' },
+    { keywords: ['昆明', '曲靖', '玉溪'], primary: '深圳港', secondary: '钦州港', reason: '云南货源常向华南口岸集拼；面向东盟或西南物流链也会比较钦州港。' },
+    { keywords: ['贵阳', '遵义'], primary: '深圳港', secondary: '钦州港', reason: '贵州货源通常优先比较华南口岸，面向西南/东盟亦可看钦州港。' }
 ];
 
 const DESTINATION_PORT_RULES = [
-    { keywords: ['东京', '千叶', '埼玉', '神奈川', '横滨', '川崎'], primary: '东京港', secondary: '横滨港', reason: '关东收货地址通常优先东京港，若班期或成本更优可比较横滨港。' },
-    { keywords: ['大阪', '京都', '兵库', '神户', '奈良'], primary: '大阪港', secondary: '神户港', reason: '关西区域多优先大阪港，神户港常作为就近且成熟的备选。' },
+    { keywords: ['东京', '千叶', '埼玉', '神奈川', '横滨', '川崎', '群马', '栃木', '茨城'], primary: '东京港', secondary: '横滨港', reason: '关东收货地址通常优先东京港，若班期或成本更优可比较横滨港。' },
+    { keywords: ['静冈', '山梨', '长野'], primary: '横滨港', secondary: '东京港', reason: '关东西缘和部分中部货源常比较横滨港与东京港，横滨港对部分项目更顺路。' },
+    { keywords: ['大阪', '京都', '兵库', '神户', '奈良', '和歌山', '滋贺'], primary: '大阪港', secondary: '神户港', reason: '关西区域多优先大阪港，神户港常作为就近且成熟的备选。' },
     { keywords: ['名古屋', '爱知', '岐阜', '三重'], primary: '名古屋港', secondary: '大阪港', reason: '中部区域优先名古屋港，若主线/价格不理想可比较关西主港。' },
+    { keywords: ['广岛', '冈山', '山口'], primary: '神户港', secondary: '大阪港', reason: '日本中国地区常通过关西主港中转或到港，神户港通常更具综合性。' },
     { keywords: ['福冈', '熊本', '大分', '佐贺', '长崎'], primary: '博多港', secondary: '门司港', reason: '九州区域优先博多港，北九州方向可比较门司港。' },
-    { keywords: ['釜山', '大邱', '蔚山', '庆尚'], primary: '釜山港', secondary: '仁川港', reason: '韩国东南部和全国主干多优先釜山港；若是首都圈项目也可比较仁川港。' },
-    { keywords: ['首尔', '仁川', '京畿', '水原'], primary: '仁川港', secondary: '釜山港', reason: '韩国首都圈优先仁川港，若船期或干线优势更明显也会比较釜山港。' },
+    { keywords: ['札幌', '北海道'], primary: '苫小牧港', secondary: '东京港', reason: '北海道区域多看苫小牧港；部分国际干线也会通过东京转运。' },
+    { keywords: ['釜山', '大邱', '蔚山', '庆尚', '昌原'], primary: '釜山港', secondary: '仁川港', reason: '韩国东南部和全国主干多优先釜山港；若是首都圈项目也可比较仁川港。' },
+    { keywords: ['首尔', '仁川', '京畿', '水原', '坡州', '富川'], primary: '仁川港', secondary: '釜山港', reason: '韩国首都圈优先仁川港，若船期或干线优势更明显也会比较釜山港。' },
+    { keywords: ['大田', '清州', '忠清'], primary: '平泽港', secondary: '仁川港', reason: '韩国中部区域常比较平泽港与仁川港，需看末端派送和班期。' },
     { keywords: ['新加坡'], primary: '新加坡港', secondary: '巴西班让港区', reason: '新加坡收货通常直接走新加坡主港，具体靠泊点由船司安排。' },
     { keywords: ['洛杉矶', '长滩', '加州', '圣地亚哥', '拉斯维加斯', '凤凰城'], primary: '洛杉矶/长滩港', secondary: '奥克兰港', reason: '美国西海岸和西南内陆多优先洛杉矶/长滩港，北加项目可比较奥克兰港。' },
+    { keywords: ['旧金山', '奥克兰', '萨克拉门托', '圣何塞', '硅谷'], primary: '奥克兰港', secondary: '洛杉矶/长滩港', reason: '北加州项目通常优先奥克兰港；若主线和班期更优也可比较洛杉矶/长滩港。' },
+    { keywords: ['西雅图', '塔科马', '波特兰'], primary: '西雅图/塔科马港', secondary: '温哥华港', reason: '美国西北区域通常优先西雅图/塔科马港，若联运更优也会比较温哥华。' },
     { keywords: ['纽约', '新泽西', '波士顿', '费城', '巴尔的摩', '华盛顿'], primary: '纽约/新泽西港', secondary: '萨凡纳港', reason: '美国东北和中大西洋区域优先纽约/新泽西港，若船期和成本更合适可比较萨凡纳港。' },
-    { keywords: ['芝加哥', '底特律', '克利夫兰', '哥伦布', '明尼阿波利斯'], primary: '纽约/新泽西港', secondary: '洛杉矶/长滩港', reason: '美国中西部常比较美东与美西双通道，需结合内陆转运成本综合判断。' },
-    { keywords: ['休斯敦', '达拉斯', '奥斯汀', '圣安东尼奥'], primary: '休斯敦港', secondary: '洛杉矶/长滩港', reason: '德州项目通常优先休斯敦港；若走美西再内陆派送更经济，也可比较美西港。' }
+    { keywords: ['萨凡纳', '亚特兰大', '夏洛特', '杰克逊维尔', '奥兰多', '迈阿密'], primary: '萨凡纳港', secondary: '纽约/新泽西港', reason: '美国东南区域通常优先萨凡纳港，部分项目也会比较杰克逊维尔或纽约/新泽西。' },
+    { keywords: ['芝加哥', '底特律', '克利夫兰', '哥伦布', '明尼阿波利斯', '印第安纳波利斯'], primary: '纽约/新泽西港', secondary: '洛杉矶/长滩港', reason: '美国中西部常比较美东与美西双通道，需结合内陆转运成本综合判断。' },
+    { keywords: ['休斯敦', '达拉斯', '奥斯汀', '圣安东尼奥'], primary: '休斯敦港', secondary: '洛杉矶/长滩港', reason: '德州项目通常优先休斯敦港；若走美西再内陆派送更经济，也可比较美西港。' },
+    { keywords: ['新奥尔良', '孟菲斯'], primary: '休斯敦港', secondary: '萨凡纳港', reason: '美国南部和密西西比流域项目常比较休斯敦港与美东/东南港口。' }
 ];
 
 const BOOKING_CARRIER_RULES = [
@@ -1963,6 +2000,173 @@ function calcVolumetric() {
     const volumetric = volumeCm / divisor;
     const chargeable = Math.max(actual, volumetric);
     box.innerText = `总体积：${volumeM3.toFixed(3)} m3\n材积重：${volumetric.toFixed(2)} kg\n实际重：${actual.toFixed(2)} kg\n计费重：${chargeable.toFixed(2)} kg`;
+}
+
+function detectCountryFromText(text) {
+    const rules = [
+        { code: 'JP', labels: ['日本', '东京', '大阪', '横滨', '神户', '名古屋'] },
+        { code: 'KR', labels: ['韩国', '首尔', '釜山', '仁川'] },
+        { code: 'SG', labels: ['新加坡', 'singapore', 'sg'] },
+        { code: 'US', labels: ['美国', 'usa', 'us', 'los angeles', 'new york', 'chicago', 'houston'] },
+        { code: 'CN', labels: ['中国', '国内', '大陆', 'china'] }
+    ];
+    const lower = text.toLowerCase();
+    const matched = rules.find(rule => rule.labels.some(label => lower.includes(label.toLowerCase())));
+    return matched ? matched.code : '';
+}
+
+function detectDivisorFromText(text) {
+    const lower = text.toLowerCase();
+    if (/(快递|express|courier|fedex|dhl|ups)/i.test(lower)) return '5000';
+    if (/(特殊|special)/i.test(lower)) return '7000';
+    if (/(空运|air|airfreight|air freight)/i.test(lower)) return '6000';
+    return '';
+}
+
+function parseSmartCalcInput(text) {
+    const normalized = text
+        .replace(/[，、；;]+/g, ' ')
+        .replace(/[（]/g, '(')
+        .replace(/[）]/g, ')')
+        .replace(/[×xX＊*]/g, '*')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    let size = null;
+    let volumeM3 = null;
+    let weightKg = null;
+    let qty = null;
+    let country = detectCountryFromText(normalized);
+    const divisor = detectDivisorFromText(normalized);
+
+    const groups = [];
+    const sizeRegex = /(\d+(?:\.\d+)?)\s*(cm|厘米|mm|毫米|m|米)?\s*\*\s*(\d+(?:\.\d+)?)\s*(cm|厘米|mm|毫米|m|米)?\s*\*\s*(\d+(?:\.\d+)?)\s*(cm|厘米|mm|毫米|m|米)?(?:\s*(?:\/|x|\+|,)?\s*(\d+(?:\.\d+)?)\s*(件|箱|票|托|托盘|木箱|板|ctn|carton|cartons|pcs|packages?))?/ig;
+    let match;
+    while ((match = sizeRegex.exec(normalized)) !== null) {
+        const unitA = match[2] || '';
+        const unitB = match[4] || '';
+        const unitC = match[6] || '';
+        const unit = unitA || unitB || unitC || 'cm';
+        const factor = String(unit).toLowerCase() === 'm' || unit === '米'
+            ? 100
+            : (String(unit).toLowerCase() === 'mm' || unit === '毫米' ? 0.1 : 1);
+        const dims = [
+            parseFloat(match[1]) * factor,
+            parseFloat(match[3]) * factor,
+            parseFloat(match[5]) * factor
+        ];
+        let groupQty = parseFloat(match[7] || '1');
+        let packageType = match[8] || '件';
+        if (!match[7]) {
+            const prefixText = normalized.slice(Math.max(0, match.index - 18), match.index);
+            const prefixMatch = prefixText.match(/(\d+(?:\.\d+)?)\s*(件|箱|票|托|托盘|木箱|板|ctn|carton|cartons|pcs|packages?)\s*$/i);
+            if (prefixMatch) {
+                groupQty = parseFloat(prefixMatch[1]);
+                packageType = prefixMatch[2];
+            }
+        }
+        groups.push({
+            size: dims,
+            qty: groupQty,
+            packageType,
+            volumeM3: (dims[0] * dims[1] * dims[2] * groupQty) / 1000000
+        });
+    }
+
+    if (groups.length) {
+        size = groups[0].size;
+        qty = groups.reduce((sum, item) => sum + item.qty, 0);
+        volumeM3 = groups.reduce((sum, item) => sum + item.volumeM3, 0);
+    }
+
+    const qtyMatch = normalized.match(/(?:数量|件数|共|合计)?\s*(\d+(?:\.\d+)?)\s*(?:件|箱|票|托|托盘|ctn|carton|cartons|pcs|packages?)/i)
+        || normalized.match(/(?:件数|数量)[:：]?\s*(\d+(?:\.\d+)?)/i);
+    if (qtyMatch && !qty) qty = parseFloat(qtyMatch[1]);
+
+    const tonMatch = normalized.match(/(?:重量|总货重|实重|总重|毛重)?[:：]?\s*(\d+(?:\.\d+)?)\s*(?:吨|t)\b/i);
+    const kgMatch = normalized.match(/(?:重量|总货重|实重|总重|毛重)?[:：]?\s*(\d+(?:\.\d+)?)\s*(?:kg|kgs|公斤)\b/i);
+    if (tonMatch) weightKg = parseFloat(tonMatch[1]) * 1000;
+    else if (kgMatch) weightKg = parseFloat(kgMatch[1]);
+
+    const cbmMatch = normalized.match(/(?:体积|方数|立方|cbm|m3|m³)[:：]?\s*(\d+(?:\.\d+)?)/i)
+        || normalized.match(/(\d+(?:\.\d+)?)\s*(?:方|立方|cbm|m3|m³)\b/i);
+    if (cbmMatch) volumeM3 = parseFloat(cbmMatch[1]);
+
+    if (!volumeM3 && size && qty) {
+        volumeM3 = (size[0] * size[1] * size[2] * qty) / 1000000;
+    }
+
+    return { size, qty, weightKg, volumeM3, country, divisor, groups };
+}
+
+function smartFillHighFreqCalc() {
+    const text = (document.getElementById('smart-calc-input').value || '').trim();
+    const box = document.getElementById('smart-calc-result');
+    if (!text) {
+        box.innerText = '请先输入货物描述、尺寸、件数、重量或目的国家信息。';
+        return;
+    }
+
+    const parsed = parseSmartCalcInput(text);
+    const actions = [];
+
+    if (parsed.size) {
+        document.getElementById('vol-size').value = parsed.size.map(v => Number.isInteger(v) ? v : v.toFixed(1)).join('*');
+        actions.push(`尺寸 ${document.getElementById('vol-size').value} cm`);
+    }
+    if (parsed.qty) {
+        document.getElementById('vol-qty').value = parsed.qty;
+        actions.push(`件数 ${parsed.qty}`);
+    }
+    if (parsed.divisor) {
+        document.getElementById('vol-divisor').value = parsed.divisor;
+        const divisorLabel = { '5000': '快递 5000', '6000': '空运 6000', '7000': '特殊 7000' };
+        actions.push(`计费系数 ${divisorLabel[parsed.divisor] || parsed.divisor}`);
+    }
+    if (parsed.weightKg !== null) {
+        document.getElementById('vol-actual').value = parsed.weightKg;
+        document.getElementById('cbm-weight').value = parsed.weightKg;
+        document.getElementById('truck-kg').value = parsed.weightKg;
+        actions.push(`重量 ${parsed.weightKg.toFixed(0)} kg`);
+    }
+    if (parsed.volumeM3 !== null) {
+        document.getElementById('cbm-total').value = parsed.volumeM3.toFixed(3);
+        document.getElementById('truck-vol').value = parsed.volumeM3.toFixed(3);
+        actions.push(`体积 ${parsed.volumeM3.toFixed(3)} m3`);
+    }
+    if (parsed.country) {
+        document.getElementById('truck-country').value = parsed.country;
+        const countryLabels = { CN: '中国', JP: '日本', KR: '韩国', SG: '新加坡', US: '美国' };
+        actions.push(`国家/地区 ${countryLabels[parsed.country]}`);
+    }
+
+    if (parsed.groups && parsed.groups.length > 1) {
+        const actual = parsed.weightKg || 0;
+        const divisor = parseFloat(document.getElementById('vol-divisor').value || '6000');
+        const volumeCm = parsed.groups.reduce((sum, item) => sum + (item.size[0] * item.size[1] * item.size[2] * item.qty), 0);
+        const volumetric = volumeCm / divisor;
+        const chargeable = Math.max(actual, volumetric);
+        const breakdown = parsed.groups.map((item, index) => `${index + 1}. ${item.size.map(v => Number.isInteger(v) ? v : v.toFixed(1)).join('*')} cm × ${item.qty}${item.packageType}`).join('\n');
+        document.getElementById('vol-result').innerText = `识别到多组包装：\n${breakdown}\n总体积：${(volumeCm / 1000000).toFixed(3)} m3\n材积重：${volumetric.toFixed(2)} kg\n实际重：${actual.toFixed(2)} kg\n计费重：${chargeable.toFixed(2)} kg`;
+        actions.push(`多组包装 ${parsed.groups.length} 组`);
+    } else if (parsed.size && parsed.qty) {
+        calcVolumetric();
+    }
+    if (parsed.volumeM3 !== null) calcContainerFit();
+    if (parsed.volumeM3 !== null) recommendTruck();
+
+    if (!actions.length) {
+        box.innerText = '暂未识别到可用字段，请尽量带上尺寸、件数、体积、重量或国家，例如：60*40*50cm 12箱 180kg 日本，或 2托 120*100*150cm + 4箱 60*40*50cm。';
+        return;
+    }
+
+    box.innerText = `已识别并带入：${actions.join('；')}\n已自动刷新可用计算结果。`;
+    queueSaveAppState();
+}
+
+function clearSmartCalcInput() {
+    document.getElementById('smart-calc-input').value = '';
+    document.getElementById('smart-calc-result').innerText = '';
 }
 
 function calcContainerFit() {
