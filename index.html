@@ -427,7 +427,13 @@
         <div class="dashboard-grid">
             <div class="stat-card">
                 <div class="stat-label">当前默认首页</div>
-                <div class="stat-value">工具工作台</div>
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                    <div class="stat-value">工具工作台</div>
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <span id="dashboard-now" style="font-size:12px; color:#5f6b78;">--</span>
+                        <button class="btn-main" id="timeis-toggle-btn" style="background:#1f7a5c; padding:6px 10px; font-size:12px;" onclick="toggleTimeIsPanel()">时间</button>
+                    </div>
+                </div>
                 <div class="stat-sub" id="dashboard-rates-info">汇率加载中...</div>
             </div>
             <div class="stat-card">
@@ -448,6 +454,20 @@
         </div>
     </div>
 
+    <div class="module-card" id="timeis-panel" style="display:none;">
+        <div class="title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <span>世界时间</span>
+            <span style="font-size:12px; color:#5f6b78;">来源：time.is</span>
+        </div>
+        <iframe
+            id="timeis-frame"
+            src="https://time.is"
+            title="time.is"
+            style="width:100%; height:520px; border:1px solid #d8e7f8; border-radius:12px; background:#fff;"
+            loading="lazy">
+        </iframe>
+    </div>
+
     <div class="module-card">
         <div class="title">全局搜索</div>
         <div class="row">
@@ -457,7 +477,11 @@
     </div>
 
     <div class="module-card">
-        <div class="title">高频计算</div>
+        <div class="title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <span>高频计算</span>
+            <button class="btn-main" id="toggle-highfreq" style="background:#95a5a6; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('highfreq')">折叠</button>
+        </div>
+        <div id="section-highfreq">
         <div class="row">
             <label>智能识别输入</label>
             <textarea id="smart-calc-input" rows="3" placeholder="可直接输入：60*40*50cm，12箱，实重180kg，发日本；或 12方 8吨 美国派送；或 体积25CBM 重量12000kg 中国"></textarea>
@@ -502,19 +526,29 @@
                 <div id="tz-result" class="tool-result" style="margin-top:10px;"></div>
             </div>
         </div>
+        </div>
     </div>
 
     <div class="module-card">
-        <div class="title">待办区</div>
+        <div class="title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <span>待办区</span>
+            <button class="btn-main" id="toggle-todo" style="background:#95a5a6; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('todo')">折叠</button>
+        </div>
+        <div id="section-todo">
         <div class="todo-row">
             <input type="text" id="dashboard-todo-input" placeholder="输入待办，例如：确认福州柜子厦门港订舱价格" style="flex:1;">
             <button class="btn-main" style="background:#4a90e2; width:100px;" onclick="addDashboardTodo()">添加</button>
         </div>
         <div id="dashboard-todo-list"></div>
+        </div>
     </div>
 
     <div class="module-card">
-        <div class="title">数据存储</div>
+        <div class="title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <span>数据存储</span>
+            <button class="btn-main" id="toggle-storage" style="background:#95a5a6; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('storage')">折叠</button>
+        </div>
+        <div id="section-storage">
         <div class="tool-result" id="storage-status">存储状态加载中...</div>
         <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
             <button class="btn-main" style="background:#4a90e2; flex:1;" onclick="saveAppStateNow()">立即保存到本地</button>
@@ -533,6 +567,7 @@
             如果你在浏览器文件选择器里手动选了 iCloud Drive 中的 JSON 文件，就可以把数据同步进去。是否支持取决于浏览器的 File System Access 能力。
         </div>
         <input type="file" id="state-import-file" accept="application/json,.json" style="display:none;" onchange="importAppStateFromFile(event)">
+        </div>
     </div>
 
     <div class="module-card">
@@ -541,7 +576,11 @@
     </div>
 
     <div class="module-card">
-        <div class="title">订舱决策助手</div>
+        <div class="title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <span>订舱决策助手</span>
+            <button class="btn-main" id="toggle-booking" style="background:#95a5a6; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('booking')">折叠</button>
+        </div>
+        <div id="section-booking">
         <div style="font-size:12px; color:#777; margin-bottom:10px;">只需输入出货地址和收件地址，系统会智能识别区域信息，并联动给出出口港、目的港、备选港、建议船司和操作提醒。当前为启发式规则版，适合前期判断。</div>
         <div class="row"><label>起运地址</label><input type="text" id="booking-origin" placeholder="例：福建省福州市仓山区"></div>
         <div class="row"><label>目的收货地址</label><input type="text" id="booking-destination" placeholder="例：日本东京都江东区 / 美国洛杉矶"></div>
@@ -551,10 +590,15 @@
         <div class="row"><label>补充备注（可选）</label><input type="text" id="booking-note" placeholder="例：亚马逊仓 / 重货 / 需稳定船期"></div>
         <div style="display:flex; gap:10px;"><button class="btn-main" style="background:#4a90e2; flex:1;" onclick="runBookingAdvisor()">生成建议</button><button class="btn-main" style="background:#27ae60; flex:1;" onclick="copyToolResult('booking-result')">复制</button></div>
         <div id="booking-result" class="tool-result" style="margin-top:10px;"></div>
+        </div>
     </div>
 
     <div class="module-card">
-        <div class="title">贸易术语速查</div>
+        <div class="title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <span>贸易术语速查</span>
+            <button class="btn-main" id="toggle-incoterm" style="background:#95a5a6; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('incoterm')">折叠</button>
+        </div>
+        <div id="section-incoterm">
         <div style="overflow:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:12px;">
                 <thead>
@@ -567,16 +611,26 @@
                 <tbody id="incoterm-table-body"></tbody>
             </table>
         </div>
+        </div>
     </div>
 
     <div class="module-card">
-        <div class="title">港口/机场代码速查</div>
+        <div class="title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <span>港口/机场代码速查</span>
+            <button class="btn-main" id="toggle-portsearch" style="background:#95a5a6; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('portsearch')">折叠</button>
+        </div>
+        <div id="section-portsearch">
         <div class="row"><input type="text" id="port-search" placeholder="例：PVG / NRT / LAX / SIN" oninput="renderPortSearch()"></div>
         <div id="port-search-results"></div>
+        </div>
     </div>
 
     <div class="module-card">
-        <div class="title">敏感货检查</div>
+        <div class="title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <span>敏感货检查</span>
+            <button class="btn-main" id="toggle-sensitive" style="background:#95a5a6; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('sensitive')">折叠</button>
+        </div>
+        <div id="section-sensitive">
         <div class="row">
             <label>客户产品信息录入</label>
             <textarea id="sensitive-product-input" rows="4" placeholder="例：蓝牙耳机，内置锂电池，带磁吸充电盒；或：面霜 100ml，含酒精；或：木制玩具，品牌货"></textarea>
@@ -597,10 +651,15 @@
         </div>
         <div style="display:flex; gap:10px; margin-top:10px;"><button class="btn-main" style="background:#4a90e2; flex:1;" onclick="checkSensitiveCargo()">检查</button><button class="btn-main" style="background:#27ae60; flex:1;" onclick="copyToolResult('sensitive-result')">复制</button></div>
         <div id="sensitive-result" class="tool-result" style="margin-top:10px;"></div>
+        </div>
     </div>
 
     <div class="module-card">
-        <div class="title">费用模板</div>
+        <div class="title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <span>费用模板</span>
+            <button class="btn-main" id="toggle-fee" style="background:#95a5a6; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('fee')">折叠</button>
+        </div>
+        <div id="section-fee">
         <div class="row"><label>海运费+国内港杂</label><input type="number" id="fee-ocean" value="0"></div>
         <div class="row"><label>拖车费</label><input type="number" id="fee-truck" value="0"></div>
         <div class="row"><label>报关费</label><input type="number" id="fee-customs" value="0"></div>
@@ -609,12 +668,18 @@
         <div class="row"><label>派送费</label><input type="number" id="fee-delivery" value="0"></div>
         <div style="display:flex; gap:10px;"><button class="btn-main" style="background:#4a90e2; flex:1;" onclick="calcFees()">汇总</button><button class="btn-main" style="background:#27ae60; flex:1;" onclick="copyToolResult('fee-result')">复制</button></div>
         <div id="fee-result" class="tool-result" style="margin-top:10px;"></div>
+        </div>
     </div>
 
     <div class="module-card">
-        <div class="title">物流节点记录</div>
+        <div class="title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <span>物流节点记录</span>
+            <button class="btn-main" id="toggle-shipment" style="background:#95a5a6; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('shipment')">折叠</button>
+        </div>
+        <div id="section-shipment">
         <textarea id="shipment-notes" rows="8" placeholder="记录：订舱 / 放舱 / 提柜 / 报关 / 进港 / 开船 / 到港 / 清关 / 派送"></textarea>
         <div style="display:flex; gap:10px; margin-top:10px;"><button class="btn-main" style="background:#4a90e2; flex:1;" onclick="saveShipmentNotes()">保存</button><button class="btn-main" style="background:#27ae60; flex:1;" onclick="copyText(document.getElementById('shipment-notes').value)">复制</button></div>
+        </div>
     </div>
 </div>
 
@@ -954,6 +1019,8 @@ window.onload = () => {
     loadJpyTrend(30);
     initTimezoneInput();
     updateDashboard();
+    updateDashboardNow();
+    setInterval(updateDashboardNow, 1000);
     initAutoSave();
     updateStorageStatus();
 };
@@ -964,6 +1031,12 @@ function switchTab(idx) {
     document.getElementById('tab' + idx).classList.add('active');
     const order = {9: 0, 3: 1, 4: 2, 6: 3, 7: 4, 8: 5};
     document.querySelectorAll('.tab-item')[order[idx]].classList.add('active');
+    if (idx !== 9) {
+        const panel = document.getElementById('timeis-panel');
+        const btn = document.getElementById('timeis-toggle-btn');
+        if (panel) panel.style.display = 'none';
+        if (btn) btn.innerText = '时间';
+    }
     if(idx === 4) initCalendar();
     if(idx === 7) renderContainerTable();
     if(idx === 7) renderShippingTable();
@@ -978,6 +1051,7 @@ function switchTab(idx) {
         renderGlobalSearch();
         renderPortSearch();
         renderIncotermTable();
+        updateDashboardNow();
     }
     if(idx === 3 && !trendPoints.length) loadJpyTrend(trendDays);
 }
@@ -2662,6 +2736,36 @@ function formatReadableTime(iso) {
     const date = new Date(iso);
     if (Number.isNaN(date.getTime())) return '未记录';
     return date.toLocaleString('zh-CN', { hour12: false });
+}
+
+function updateDashboardNow() {
+    const el = document.getElementById('dashboard-now');
+    if (!el) return;
+    const now = new Date();
+    el.innerText = now.toLocaleString('zh-CN', {
+        hour12: false,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+}
+
+function toggleTimeIsPanel() {
+    switchTab(9);
+    const panel = document.getElementById('timeis-panel');
+    const btn = document.getElementById('timeis-toggle-btn');
+    if (!panel || !btn) return;
+    const opening = panel.style.display === 'none' || !panel.style.display;
+    panel.style.display = opening ? 'block' : 'none';
+    btn.innerText = opening ? '返回首页' : '时间';
+    if (opening) {
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 }
 
 function resolveOriginPort(address) {
