@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>物流工作台 - 精简版</title>
+    <title>物流工作台 - 多功能版</title>
 
     <script src="https://cdn.jsdelivr.net/npm/lunar-javascript/lunar.js"></script>
     <script src="https://yubinbango.github.io/yubinbango/yubinbango.js" charset="UTF-8"></script>
@@ -469,7 +469,7 @@
             <div class="quick-card" onclick="switchTab(6)"><b>地址</b>多国家地址查询与亚马逊仓库代码</div>
             <div class="quick-card" onclick="switchTab(7)"><b>柜型与船司</b>看柜型、船司、免柜期参考</div>
             <div class="quick-card" onclick="switchTab(8)"><b>货车</b>多国家货车尺寸、方数、载重</div>
-            <div class="quick-card" onclick="openLabelTool()"><b>标签工具</b>弹出使用标签1.0，打印和分享更方便</div>
+            <div class="quick-card" onclick="openLabelTool()"><b>标签工具</b>直接打开标签1.0，打印和分享更方便</div>
             <div class="quick-card" onclick="switchTab(12)"><b>宏观系统</b>站内打开 hg invest 2 工作页</div>
             <div class="quick-card" onclick="openNewsBrowser('war')"><b>新闻浏览</b>集中浏览 War / 预警 / News</div>
             <div class="quick-card" onclick="switchTab(5)"><b>投资工具</b>站内打开 hg invest 3.0 工作页</div>
@@ -1139,6 +1139,19 @@ window.onload = () => {
 };
 
 function switchTab(idx) {
+    if (isMobileLike()) {
+        const mobilePages = {
+            5: 'hg invest 3.0.html?from=workbench',
+            10: 'Logistics-Quotation.html?from=workbench',
+            11: 'Intelligent-freight-generation-system.html?from=workbench',
+            12: 'hg invest 2.html?from=workbench',
+            14: '标签1.0.html?from=workbench'
+        };
+        if (mobilePages[idx]) {
+            window.location.href = new URL(mobilePages[idx], window.location.href).href;
+            return;
+        }
+    }
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.querySelectorAll('.tab-item').forEach(i => i.classList.remove('active'));
     document.getElementById('tab' + idx).classList.add('active');
@@ -2902,15 +2915,7 @@ function toggleToolSection(name) {
 }
 
 function openLabelTool() {
-    if (window.innerWidth <= 768) {
-        switchTab(14);
-        return;
-    }
-    ensureLocalFrameLoaded('label-tool-frame');
-    const modal = document.getElementById('label-tool-modal');
-    if (!modal) return;
-    modal.style.display = 'block';
-    document.body.style.overflow = 'hidden';
+    openToolDirect('标签1.0.html?from=workbench');
 }
 
 function closeLabelTool() {
