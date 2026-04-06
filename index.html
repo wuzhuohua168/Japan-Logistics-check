@@ -184,11 +184,13 @@
 <div id="tab5" class="tab-content fullpage-tab">
     <iframe
         id="invest-tool-frame"
-        src="hg invest 3.0.html"
+        data-page="hg invest 3.0.html"
+        src=""
         title="投资"
         class="fullscreen-frame"
-        loading="lazy">
+        loading="eager">
     </iframe>
+    <button class="floating-back-btn" style="right:132px; background:rgba(74, 144, 226, 0.94);" onclick="openToolDirect('hg invest 3.0.html')">直接打开</button>
     <button class="floating-back-btn" onclick="switchTab(9)">返回工具</button>
 </div>
 
@@ -469,7 +471,7 @@
             <div class="quick-card" onclick="switchTab(8)"><b>货车</b>多国家货车尺寸、方数、载重</div>
             <div class="quick-card" onclick="openLabelTool()"><b>标签工具</b>弹出使用标签1.0，打印和分享更方便</div>
             <div class="quick-card" onclick="switchTab(12)"><b>宏观系统</b>站内打开 hg invest 2 工作页</div>
-            <div class="quick-card" onclick="openNewsBrowser('news')"><b>新闻浏览</b>集中浏览 War / 预警 / News</div>
+            <div class="quick-card" onclick="openNewsBrowser('war')"><b>新闻浏览</b>集中浏览 War / 预警 / News</div>
             <div class="quick-card" onclick="switchTab(5)"><b>投资工具</b>站内打开 hg invest 3.0 工作页</div>
             <div class="quick-card" onclick="switchTab(10)"><b>报价单制作</b>站内打开 Logistics-Quotation 工作页</div>
             <div class="quick-card" onclick="switchTab(11)"><b>费用单制作</b>站内打开 Intelligent-freight-generation-system 工作页</div>
@@ -502,7 +504,7 @@
                     <button class="btn-main" style="background:#95a5a6; padding:8px 12px; font-size:12px;" onclick="closeLabelTool()">关闭</button>
                 </div>
             </div>
-            <iframe id="label-tool-frame" src="标签1.0.html" title="标签工具" style="border:none; width:100%; flex:1; background:#fff;"></iframe>
+            <iframe id="label-tool-frame" data-page="标签1.0.html" src="" title="标签工具" style="border:none; width:100%; flex:1; background:#fff;"></iframe>
         </div>
     </div>
 
@@ -724,33 +726,52 @@
 <div id="tab10" class="tab-content fullpage-tab">
     <iframe
         id="quotation-tool-frame"
-        src="Logistics-Quotation.html"
+        data-page="Logistics-Quotation.html"
+        src=""
         title="报价单制作"
         class="fullscreen-frame"
-        loading="lazy">
+        loading="eager">
     </iframe>
+    <button class="floating-back-btn" style="right:132px; background:rgba(74, 144, 226, 0.94);" onclick="openToolDirect('Logistics-Quotation.html')">直接打开</button>
     <button class="floating-back-btn" onclick="switchTab(9)">返回工具</button>
 </div>
 
 <div id="tab11" class="tab-content fullpage-tab">
     <iframe
         id="fee-tool-frame"
-        src="Intelligent-freight-generation-system.html"
+        data-page="Intelligent-freight-generation-system.html"
+        src=""
         title="费用单制作"
         class="fullscreen-frame"
-        loading="lazy">
+        loading="eager">
     </iframe>
+    <button class="floating-back-btn" style="right:132px; background:rgba(74, 144, 226, 0.94);" onclick="openToolDirect('Intelligent-freight-generation-system.html')">直接打开</button>
     <button class="floating-back-btn" onclick="switchTab(9)">返回工具</button>
 </div>
 
 <div id="tab12" class="tab-content fullpage-tab">
     <iframe
         id="macro-tool-frame"
-        src="hg invest 2.html"
+        data-page="hg invest 2.html"
+        src=""
         title="宏观系统"
         class="fullscreen-frame"
-        loading="lazy">
+        loading="eager">
     </iframe>
+    <button class="floating-back-btn" style="right:132px; background:rgba(74, 144, 226, 0.94);" onclick="openToolDirect('hg invest 2.html')">直接打开</button>
+    <button class="floating-back-btn" onclick="switchTab(9)">返回工具</button>
+</div>
+
+<div id="tab14" class="tab-content fullpage-tab">
+    <iframe
+        id="label-tool-mobile-frame"
+        data-page="标签1.0.html"
+        src=""
+        title="标签工具"
+        class="fullscreen-frame"
+        loading="eager">
+    </iframe>
+    <button class="floating-back-btn" style="right:132px; background:rgba(74, 144, 226, 0.94);" onclick="openToolDirect('标签1.0.html')">直接打开</button>
     <button class="floating-back-btn" onclick="switchTab(9)">返回工具</button>
 </div>
 
@@ -762,10 +783,10 @@
     </div>
     <iframe
         id="news-browser-frame"
-        src="https://www.jin10.com/"
+        src="https://iran.immersivetranslate.com/zh-CN/"
         title="新闻浏览"
         style="width:100%; height:calc(100vh - 56px); margin-top:56px; border:none; background:#fff; display:block;"
-        loading="lazy">
+        loading="eager">
     </iframe>
     <button class="floating-back-btn" onclick="switchTab(9)">返回工具</button>
 </div>
@@ -776,7 +797,7 @@
     <div class="tab-item" onclick="switchTab(4)"><span class="tab-icon">📅</span><span>日历</span></div>
     <div class="tab-item" onclick="switchTab(5)"><span class="tab-icon">📈</span><span>投资</span></div>
     <div class="tab-item" onclick="switchTab(12)"><span class="tab-icon">🌐</span><span>宏观</span></div>
-    <div class="tab-item" onclick="openNewsBrowser('news')"><span class="tab-icon">📰</span><span>新闻</span></div>
+    <div class="tab-item" onclick="openNewsBrowser('war')"><span class="tab-icon">📰</span><span>新闻</span></div>
     <div class="tab-item" onclick="switchTab(6)"><span class="tab-icon">📮</span><span>邮编</span></div>
     <div class="tab-item" onclick="switchTab(7)"><span class="tab-icon">🚢</span><span>柜型</span></div>
     <div class="tab-item" onclick="switchTab(8)"><span class="tab-icon">🚚</span><span>货车</span></div>
@@ -1122,12 +1143,17 @@ function switchTab(idx) {
     document.querySelectorAll('.tab-item').forEach(i => i.classList.remove('active'));
     document.getElementById('tab' + idx).classList.add('active');
     const order = {9: 0, 3: 1, 4: 2, 5: 3, 12: 4, 13: 5, 6: 6, 7: 7, 8: 8, 10: 9, 11: 10};
-    document.querySelectorAll('.tab-item')[order[idx]].classList.add('active');
+    if (order[idx] !== undefined) document.querySelectorAll('.tab-item')[order[idx]].classList.add('active');
     const tabBar = document.querySelector('.tab-bar');
     if (tabBar) {
-        if ([5, 10, 11, 12, 13].includes(idx)) tabBar.classList.add('hidden');
+        if ([5, 10, 11, 12, 13, 14].includes(idx)) tabBar.classList.add('hidden');
         else tabBar.classList.remove('hidden');
     }
+    if (idx === 5) ensureLocalFrameLoaded('invest-tool-frame');
+    if (idx === 10) ensureLocalFrameLoaded('quotation-tool-frame');
+    if (idx === 11) ensureLocalFrameLoaded('fee-tool-frame');
+    if (idx === 12) ensureLocalFrameLoaded('macro-tool-frame');
+    if (idx === 14) ensureLocalFrameLoaded('label-tool-mobile-frame');
     if (idx !== 9) {
         const panel = document.getElementById('timeis-panel');
         const btn = document.getElementById('timeis-toggle-btn');
@@ -2876,6 +2902,11 @@ function toggleToolSection(name) {
 }
 
 function openLabelTool() {
+    if (window.innerWidth <= 768) {
+        switchTab(14);
+        return;
+    }
+    ensureLocalFrameLoaded('label-tool-frame');
     const modal = document.getElementById('label-tool-modal');
     if (!modal) return;
     modal.style.display = 'block';
@@ -2890,9 +2921,33 @@ function closeLabelTool() {
 }
 
 function refreshLabelTool() {
-    const frame = document.getElementById('label-tool-frame');
+    ensureLocalFrameLoaded('label-tool-frame', true);
+}
+
+function isMobileLike() {
+    return window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
+}
+
+function ensureLocalFrameLoaded(frameId, forceReload = false) {
+    const frame = document.getElementById(frameId);
     if (!frame) return;
-    frame.src = frame.src;
+    const page = frame.dataset.page;
+    if (!page) return;
+    const resolved = new URL(page, window.location.href).href;
+    const current = frame.getAttribute('src') || '';
+    if (forceReload || !current || current === '' || current === window.location.href || current.endsWith('/物流工作台.html')) {
+        if (isMobileLike()) {
+            frame.src = 'about:blank';
+            setTimeout(() => { frame.src = resolved; }, 30);
+            return;
+        }
+        frame.src = resolved;
+    }
+}
+
+function openToolDirect(page) {
+    const resolved = new URL(page, window.location.href).href;
+    window.location.href = resolved;
 }
 
 function setNewsBrowser(type) {
@@ -2914,7 +2969,7 @@ function setNewsBrowser(type) {
     });
 }
 
-function openNewsBrowser(type = 'news') {
+function openNewsBrowser(type = 'war') {
     switchTab(13);
     setNewsBrowser(type);
 }
