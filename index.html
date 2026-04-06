@@ -78,7 +78,7 @@
         .stat-value { font-size: 18px; font-weight: bold; color: #2c3e50; }
         .stat-sub { font-size: 11px; color: #6f7d8a; margin-top: 4px; line-height: 1.5; }
         .market-quote-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-        .market-quote-tile { position: relative; min-height: 58px; padding: 8px 10px; border-radius: 12px; border: 1px solid #dfe8f2; background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%); box-shadow: 0 8px 18px rgba(31, 58, 93, 0.05); overflow: hidden; cursor: pointer; }
+        .market-quote-tile { position: relative; min-height: 54px; padding: 7px 9px; border-radius: 12px; border: 1px solid #dfe8f2; background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%); box-shadow: 0 6px 14px rgba(31, 58, 93, 0.05); overflow: hidden; cursor: pointer; }
         .market-quote-label { font-size: 10px; color: #607080; margin-bottom: 2px; font-weight: 600; }
         .market-quote-widget { min-height: 30px; }
         .market-quote-widget .tradingview-widget-container,
@@ -108,7 +108,19 @@
         .floating-back-btn { position: fixed; right: 16px; bottom: 18px; z-index: 10001; background: rgba(31, 122, 92, 0.94); color: #fff; border: none; border-radius: 999px; padding: 12px 16px; font-size: 13px; font-weight: bold; box-shadow: 0 10px 30px rgba(0,0,0,0.16); cursor: pointer; }
 
         @media (max-width: 768px) {
-            .mini-grid, .dashboard-grid, .tool-grid, .market-quote-grid { grid-template-columns: 1fr; }
+            .module-card { padding: 10px; margin-bottom: 8px; border-radius: 14px; }
+            .dashboard-hero { padding: 10px; }
+            .mini-grid, .dashboard-grid, .tool-grid { grid-template-columns: 1fr; }
+            .market-quote-grid { grid-template-columns: 1fr; gap: 3px; }
+            .market-quote-tile { min-height: 22px; padding: 2px 4px; border-radius: 7px; box-shadow: 0 2px 5px rgba(31, 58, 93, 0.03); }
+            .market-quote-label { font-size: 6px; margin-bottom: 0; line-height: 1; }
+            .market-quote-widget { min-height: 12px; }
+            .market-quote-widget .tradingview-widget-container,
+            .market-quote-widget .tradingview-widget-container__widget { height: 12px !important; }
+            .quick-card { padding: 10px; font-size: 11px; }
+            .quick-card-group { padding: 8px; }
+            .quick-subgrid { gap: 4px; }
+            .quick-subcard { padding: 5px 8px; font-size: 11px; }
             .floating-back-btn { right: 12px; bottom: 14px; padding: 11px 14px; }
         }
 
@@ -6030,7 +6042,7 @@ function appendHomeQuoteWidget(container, symbol) {
         isTransparent: true,
         locale: 'zh_CN',
         showSymbolLogo: false,
-        fontSize: '10'
+        fontSize: '7'
     });
     container.appendChild(script);
 }
