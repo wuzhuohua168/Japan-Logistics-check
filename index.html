@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>物流工作台 - 多功能版</title>
+    <title>物流工作台 - 精简版</title>
 
     <script src="https://cdn.jsdelivr.net/npm/lunar-javascript/lunar.js"></script>
     <script src="https://yubinbango.github.io/yubinbango/yubinbango.js" charset="UTF-8"></script>
@@ -185,7 +185,7 @@
     <iframe
         id="invest-online-frame"
         src="https://hg-inves3-0.vercel.app/"
-        title="投资工具"
+        title="看盘工具"
         style="width:100%; height:100vh; border:none; background:#fff; display:block;"
         loading="eager">
     </iframe>
@@ -467,10 +467,10 @@
             <div class="quick-card" onclick="switchTab(6)"><b>地址</b>多国家地址查询与亚马逊仓库代码</div>
             <div class="quick-card" onclick="switchTab(7)"><b>柜型与船司</b>看柜型、船司、免柜期参考</div>
             <div class="quick-card" onclick="switchTab(8)"><b>货车</b>多国家货车尺寸、方数、载重</div>
-            <div class="quick-card" onclick="openLabelTool()"><b>标签工具</b>站内打开标签页，打印和分享更方便</div>
-            <div class="quick-card" onclick="switchTab(12)"><b>宏观系统</b>跳转线上宏观系统</div>
+            <div class="quick-card" onclick="openLabelTool()"><b>标签生成</b>站内打开标签页，打印和分享更方便</div>
             <div class="quick-card" onclick="openNewsBrowser('war')"><b>新闻浏览</b>集中浏览 War / 预警 / News</div>
-            <div class="quick-card" onclick="switchTab(5)"><b>投资工具</b>跳转线上投资工具</div>
+            <div class="quick-card" onclick="switchTab(12)"><b>宏观系统</b>跳转线上宏观系统</div>
+            <div class="quick-card" onclick="switchTab(5)"><b>看盘工具</b>跳转线上看盘工具</div>
             <div class="quick-card" onclick="switchTab(10)"><b>报价单制作</b>站内打开 Logistics-Quotation 工作页</div>
             <div class="quick-card" onclick="switchTab(11)"><b>费用单制作</b>站内打开 Intelligent-freight-generation-system 工作页</div>
         </div>
@@ -745,7 +745,7 @@
         id="label-tool-mobile-frame"
         data-template="template-label"
         src="about:blank"
-        title="标签工具"
+        title="标签生成"
         class="fullscreen-frame"
         loading="eager">
     </iframe>
@@ -5981,7 +5981,7 @@ function setNewsBrowser(type) {
     if (!frame) return;
     const sources = {
         war: 'https://iran.immersivetranslate.com/zh-CN/',
-        alerts: 'hg invest 2.html',
+        alerts: 'https://hg-inves3-0.vercel.app/',
         news: 'https://www.jin10.com/'
     };
     frame.src = sources[type] || sources.news;
