@@ -77,7 +77,8 @@
         .stat-label { font-size: 11px; color: #7b8794; margin-bottom: 4px; }
         .stat-value { font-size: 18px; font-weight: bold; color: #2c3e50; }
         .stat-sub { font-size: 11px; color: #6f7d8a; margin-top: 4px; line-height: 1.5; }
-        .backup-inline { font-size: 10px; color: #7f8c8d; margin-top: 4px; text-align: right; }
+        .backup-inline { font-size: 10px; color: #7f8c8d; white-space: nowrap; }
+        .dashboard-title-row { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
         .market-quote-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .market-quote-tile { position: relative; display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: center; min-height: 34px; padding: 4px 8px; border-radius: 10px; border: 1px solid #dfe8f2; background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%); box-shadow: 0 4px 10px rgba(31, 58, 93, 0.04); overflow: hidden; cursor: pointer; gap: 6px; }
         .market-quote-label { font-size: 10px; color: #607080; margin-bottom: 0; font-weight: 700; line-height: 1; white-space: nowrap; }
@@ -501,7 +502,7 @@
 
 <div id="tab9" class="tab-content active">
     <div class="module-card dashboard-hero">
-        <div class="title">首页仪表盘</div>
+        <div class="dashboard-title-row"><div class="title">首页仪表盘</div><div class="backup-inline" id="dashboard-backup-inline">自动备份：未记录</div></div>
         <div class="dashboard-grid">
             <div class="stat-card">
                 <div class="stat-label">当前默认首页</div>
@@ -513,7 +514,6 @@
                     </div>
                 </div>
                 <div class="stat-sub" id="dashboard-rates-info">汇率加载中...</div>
-                <div class="backup-inline" id="dashboard-backup-inline">自动备份：未记录</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">本月提醒</div>
