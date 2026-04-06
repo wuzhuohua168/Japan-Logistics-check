@@ -55,6 +55,13 @@
         .mini-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .quick-card { padding: 12px; border: 1px solid #e7edf5; border-radius: 10px; background: #fafcff; font-size: 12px; color: #555; cursor: pointer; }
         .quick-card b { display: block; color: #2c3e50; margin-bottom: 4px; }
+        .quick-card.focus-group { background: linear-gradient(135deg, #fff8ec 0%, #fffdf7 100%); border-color: #f0d48b; box-shadow: 0 4px 12px rgba(240, 186, 86, 0.12); }
+        .quick-card.focus-group b { color: #8a5b00; }
+        .quick-card-group { cursor: default; padding: 10px; }
+        .quick-card-group .group-title { display: block; color: #8a5b00; margin-bottom: 6px; font-weight: bold; }
+        .quick-subgrid { display: flex; flex-wrap: wrap; gap: 6px; }
+        .quick-subcard { padding: 6px 10px; border: 1px solid #f0d48b; border-radius: 999px; background: rgba(255,255,255,0.92); font-size: 12px; color: #8a5b00; cursor: pointer; line-height: 1.2; }
+        .quick-subcard b { display: inline; color: #8a5b00; margin-bottom: 0; font-weight: 600; }
         .dashboard-hero { background: linear-gradient(135deg, #eaf4ff 0%, #fdfdfd 55%, #eef8f1 100%); border: 1px solid #d8e7f8; }
         .dashboard-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .stat-card { padding: 12px; border-radius: 10px; border: 1px solid #e6edf5; background: #fff; }
@@ -439,7 +446,6 @@
 <div id="tab9" class="tab-content active">
     <div class="module-card dashboard-hero">
         <div class="title">首页仪表盘</div>
-        <div style="font-size:12px; color:#5f6b78; margin-bottom:10px;">把高频判断放在首页：搜索、换算、估算、推荐都可以直接在这里完成。</div>
         <div class="dashboard-grid">
             <div class="stat-card">
                 <div class="stat-label">当前默认首页</div>
@@ -468,9 +474,13 @@
             <div class="quick-card" onclick="switchTab(7)"><b>柜型与船司</b>看柜型、船司、免柜期参考</div>
             <div class="quick-card" onclick="switchTab(8)"><b>货车</b>多国家货车尺寸、方数、载重</div>
             <div class="quick-card" onclick="openLabelTool()"><b>标签生成</b>站内打开标签页，打印和分享更方便</div>
-            <div class="quick-card" onclick="openNewsBrowser('war')"><b>新闻浏览</b>集中浏览 War / 预警 / News</div>
-            <div class="quick-card" onclick="switchTab(5)"><b>看盘工具</b>跳转线上看盘工具</div>
-            <div class="quick-card" onclick="switchTab(12)"><b>宏观系统</b>跳转线上宏观系统</div>
+            <div class="quick-card focus-group quick-card-group">
+                <div class="quick-subgrid">
+                    <div class="quick-subcard" onclick="openNewsBrowser('war')"><b>新闻浏览</b></div>
+                    <div class="quick-subcard" onclick="switchTab(5)"><b>看盘工具</b></div>
+                    <div class="quick-subcard" onclick="switchTab(12)"><b>宏观系统</b></div>
+                </div>
+            </div>
             <div class="quick-card" onclick="switchTab(10)"><b>报价单制作</b>站内打开 Logistics-Quotation 工作页</div>
             <div class="quick-card" onclick="switchTab(11)"><b>费用单制作</b>站内打开 Intelligent-freight-generation-system 工作页</div>
         </div>
