@@ -78,11 +78,11 @@
         .stat-value { font-size: 18px; font-weight: bold; color: #2c3e50; }
         .stat-sub { font-size: 11px; color: #6f7d8a; margin-top: 4px; line-height: 1.5; }
         .market-quote-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-        .market-quote-tile { position: relative; min-height: 54px; padding: 7px 9px; border-radius: 12px; border: 1px solid #dfe8f2; background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%); box-shadow: 0 6px 14px rgba(31, 58, 93, 0.05); overflow: hidden; cursor: pointer; }
-        .market-quote-label { font-size: 10px; color: #607080; margin-bottom: 2px; font-weight: 600; }
-        .market-quote-widget { min-height: 30px; }
+        .market-quote-tile { position: relative; display: grid; grid-template-columns: 54px minmax(0, 1fr); align-items: center; min-height: 32px; padding: 4px 8px; border-radius: 10px; border: 1px solid #dfe8f2; background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%); box-shadow: 0 4px 10px rgba(31, 58, 93, 0.04); overflow: hidden; cursor: pointer; gap: 6px; }
+        .market-quote-label { font-size: 9px; color: #607080; margin-bottom: 0; font-weight: 600; line-height: 1.1; white-space: nowrap; }
+        .market-quote-widget { min-height: 16px; min-width: 0; }
         .market-quote-widget .tradingview-widget-container,
-        .market-quote-widget .tradingview-widget-container__widget { height: 30px !important; }
+        .market-quote-widget .tradingview-widget-container__widget { height: 16px !important; }
         .market-quote-overlay { position: absolute; inset: 0; z-index: 5; border: none; background: transparent; padding: 0; cursor: pointer; }
         .quote-modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 18px; background: rgba(15, 23, 42, 0.52); z-index: 10020; }
         .quote-modal.show { display: flex; }
@@ -112,11 +112,11 @@
             .dashboard-hero { padding: 10px; }
             .mini-grid, .dashboard-grid, .tool-grid { grid-template-columns: 1fr; }
             .market-quote-grid { grid-template-columns: 1fr; gap: 3px; }
-            .market-quote-tile { min-height: 22px; padding: 2px 4px; border-radius: 7px; box-shadow: 0 2px 5px rgba(31, 58, 93, 0.03); }
+            .market-quote-tile { grid-template-columns: 48px minmax(0, 1fr); min-height: 20px; padding: 2px 4px; border-radius: 7px; box-shadow: 0 2px 5px rgba(31, 58, 93, 0.03); gap: 4px; }
             .market-quote-label { font-size: 6px; margin-bottom: 0; line-height: 1; }
-            .market-quote-widget { min-height: 12px; }
+            .market-quote-widget { min-height: 11px; }
             .market-quote-widget .tradingview-widget-container,
-            .market-quote-widget .tradingview-widget-container__widget { height: 12px !important; }
+            .market-quote-widget .tradingview-widget-container__widget { height: 11px !important; }
             .quick-card { padding: 10px; font-size: 11px; }
             .quick-card-group { padding: 8px; }
             .quick-subgrid { gap: 4px; }
@@ -835,16 +835,11 @@
 </div>
 
 <div id="tab13" class="tab-content fullpage-tab">
-    <div style="position:fixed; top:12px; left:12px; right:12px; z-index:10001; display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="btn-main" id="news-tab-war" style="background:#8B0000; padding:10px 14px; font-size:12px;" onclick="setNewsBrowser('war')">War</button>
-        <button class="btn-main" id="news-tab-alerts" style="background:#95a5a6; padding:10px 14px; font-size:12px;" onclick="setNewsBrowser('alerts')">预警</button>
-        <button class="btn-main" id="news-tab-news" style="background:#95a5a6; padding:10px 14px; font-size:12px;" onclick="setNewsBrowser('news')">News</button>
-    </div>
     <iframe
         id="news-browser-frame"
         src="https://iran.immersivetranslate.com/zh-CN/"
         title="新闻浏览"
-        style="width:100%; height:calc(100vh - 56px); margin-top:56px; border:none; background:#fff; display:block;"
+        style="width:100%; height:100vh; border:none; background:#fff; display:block;"
         loading="eager">
     </iframe>
     <button class="floating-back-btn" onclick="switchTab(9)">返回工具</button>
@@ -6191,19 +6186,9 @@ function setNewsBrowser(type) {
     const frame = document.getElementById('news-browser-frame');
     if (!frame) return;
     const sources = {
-        war: 'https://iran.immersivetranslate.com/zh-CN/',
-        alerts: 'https://hg-inves3-0.vercel.app/',
-        news: 'https://www.jin10.com/'
+        war: 'https://iran.immersivetranslate.com/zh-CN/'
     };
-    frame.src = sources[type] || sources.news;
-    const ids = ['war', 'alerts', 'news'];
-    ids.forEach(id => {
-        const btn = document.getElementById(`news-tab-${id}`);
-        if (!btn) return;
-        btn.style.background = id === type
-            ? (id === 'war' ? '#8B0000' : id === 'alerts' ? '#f59e0b' : '#ff6a00')
-            : '#95a5a6';
-    });
+    frame.src = sources[type] || sources.war;
 }
 
 function openNewsBrowser(type = 'war') {
