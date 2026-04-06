@@ -13,7 +13,9 @@
         body { background: #f0f3f7; font-family: -apple-system, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         .tab-content { display: none; padding: 10px; flex: 1; overflow-y: auto; padding-bottom: 80px; }
         .tab-content.active { display: block; }
+        .tab-content.fullpage-tab { padding: 0; padding-bottom: 0; overflow: hidden; background: #fff; }
         .tab-bar { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: #fff; display: flex; border-top: 1px solid #e0e0e0; z-index: 9999; }
+        .tab-bar.hidden { display: none; }
         .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #8a8a8a; font-size: 10px; cursor: pointer; }
         .tab-item.active { color: #4a90e2; font-weight: bold; }
         .tab-icon { font-size: 20px; margin-bottom: 2px; }
@@ -72,9 +74,12 @@
         .todo-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
         .todo-left input { width: auto; }
         .todo-done { color: #98a4af; text-decoration: line-through; }
+        .fullscreen-frame { width: 100%; height: 100vh; border: none; background: #fff; display: block; }
+        .floating-back-btn { position: fixed; right: 16px; bottom: 18px; z-index: 10001; background: rgba(31, 122, 92, 0.94); color: #fff; border: none; border-radius: 999px; padding: 12px 16px; font-size: 13px; font-weight: bold; box-shadow: 0 10px 30px rgba(0,0,0,0.16); cursor: pointer; }
 
         @media (max-width: 768px) {
             .mini-grid, .dashboard-grid, .tool-grid { grid-template-columns: 1fr; }
+            .floating-back-btn { right: 12px; bottom: 14px; padding: 11px 14px; }
         }
 
         .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 10px 20px; border-radius: 20px; z-index: 1000; opacity: 0; transition: 0.3s; pointer-events: none; font-size: 13px; }
@@ -174,6 +179,17 @@
         </div>
         <div class="cal-grid" id="calendar-grid"></div>
     </div>
+</div>
+
+<div id="tab5" class="tab-content fullpage-tab">
+    <iframe
+        id="invest-tool-frame"
+        src="hg invest 3.0.html"
+        title="投资"
+        class="fullscreen-frame"
+        loading="lazy">
+    </iframe>
+    <button class="floating-back-btn" onclick="switchTab(9)">返回工具</button>
 </div>
 
 <div id="tab6" class="tab-content">
@@ -451,6 +467,12 @@
             <div class="quick-card" onclick="switchTab(6)"><b>地址</b>多国家地址查询与亚马逊仓库代码</div>
             <div class="quick-card" onclick="switchTab(7)"><b>柜型与船司</b>看柜型、船司、免柜期参考</div>
             <div class="quick-card" onclick="switchTab(8)"><b>货车</b>多国家货车尺寸、方数、载重</div>
+            <div class="quick-card" onclick="openLabelTool()"><b>标签工具</b>弹出使用标签1.0，打印和分享更方便</div>
+            <div class="quick-card" onclick="switchTab(12)"><b>宏观系统</b>站内打开 hg invest 2 工作页</div>
+            <div class="quick-card" onclick="openNewsBrowser('news')"><b>新闻浏览</b>集中浏览 War / 预警 / News</div>
+            <div class="quick-card" onclick="switchTab(5)"><b>投资工具</b>站内打开 hg invest 3.0 工作页</div>
+            <div class="quick-card" onclick="switchTab(10)"><b>报价单制作</b>站内打开 Logistics-Quotation 工作页</div>
+            <div class="quick-card" onclick="switchTab(11)"><b>费用单制作</b>站内打开 Intelligent-freight-generation-system 工作页</div>
         </div>
     </div>
 
@@ -468,6 +490,22 @@
         </iframe>
     </div>
 
+    <div id="label-tool-modal" style="display:none; position:fixed; inset:0; background:rgba(15, 23, 42, 0.5); z-index:9999; padding:18px;">
+        <div style="background:#fff; width:min(1100px, 100%); height:min(88vh, 920px); margin:0 auto; border-radius:16px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.18); display:flex; flex-direction:column;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 16px; border-bottom:1px solid #e5ecf3;">
+                <div>
+                    <div style="font-size:16px; font-weight:700; color:#1f2d3d;">标签工具</div>
+                    <div style="font-size:12px; color:#6b7280;">已接入 标签1.0，可直接在弹窗内使用</div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-main" style="background:#4a90e2; padding:8px 12px; font-size:12px;" onclick="refreshLabelTool()">刷新</button>
+                    <button class="btn-main" style="background:#95a5a6; padding:8px 12px; font-size:12px;" onclick="closeLabelTool()">关闭</button>
+                </div>
+            </div>
+            <iframe id="label-tool-frame" src="标签1.0.html" title="标签工具" style="border:none; width:100%; flex:1; background:#fff;"></iframe>
+        </div>
+    </div>
+
     <div class="module-card">
         <div class="title">全局搜索</div>
         <div class="row">
@@ -477,11 +515,11 @@
     </div>
 
     <div class="module-card">
-        <div class="title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div class="title" style="display:flex; align-items:center; justify-content:flex-start; gap:8px; flex-wrap:wrap;">
             <span>高频计算</span>
-            <button class="btn-main" id="toggle-highfreq" style="background:#95a5a6; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('highfreq')">折叠</button>
+            <button class="btn-main" id="toggle-highfreq" style="background:#1f7a5c; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('highfreq')">展开</button>
         </div>
-        <div id="section-highfreq">
+        <div id="section-highfreq" style="display:none;">
         <div class="row">
             <label>智能识别输入</label>
             <textarea id="smart-calc-input" rows="3" placeholder="可直接输入：60*40*50cm，12箱，实重180kg，发日本；或 12方 8吨 美国派送；或 体积25CBM 重量12000kg 中国"></textarea>
@@ -530,11 +568,11 @@
     </div>
 
     <div class="module-card">
-        <div class="title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div class="title" style="display:flex; align-items:center; justify-content:flex-start; gap:8px; flex-wrap:wrap;">
             <span>待办区</span>
-            <button class="btn-main" id="toggle-todo" style="background:#95a5a6; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('todo')">折叠</button>
+            <button class="btn-main" id="toggle-todo" style="background:#1f7a5c; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('todo')">展开</button>
         </div>
-        <div id="section-todo">
+        <div id="section-todo" style="display:none;">
         <div class="todo-row">
             <input type="text" id="dashboard-todo-input" placeholder="输入待办，例如：确认福州柜子厦门港订舱价格" style="flex:1;">
             <button class="btn-main" style="background:#4a90e2; width:100px;" onclick="addDashboardTodo()">添加</button>
@@ -544,11 +582,11 @@
     </div>
 
     <div class="module-card">
-        <div class="title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div class="title" style="display:flex; align-items:center; justify-content:flex-start; gap:8px; flex-wrap:wrap;">
             <span>数据存储</span>
-            <button class="btn-main" id="toggle-storage" style="background:#95a5a6; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('storage')">折叠</button>
+            <button class="btn-main" id="toggle-storage" style="background:#1f7a5c; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('storage')">展开</button>
         </div>
-        <div id="section-storage">
+        <div id="section-storage" style="display:none;">
         <div class="tool-result" id="storage-status">存储状态加载中...</div>
         <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
             <button class="btn-main" style="background:#4a90e2; flex:1;" onclick="saveAppStateNow()">立即保存到本地</button>
@@ -576,11 +614,11 @@
     </div>
 
     <div class="module-card">
-        <div class="title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div class="title" style="display:flex; align-items:center; justify-content:flex-start; gap:8px; flex-wrap:wrap;">
             <span>订舱决策助手</span>
-            <button class="btn-main" id="toggle-booking" style="background:#95a5a6; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('booking')">折叠</button>
+            <button class="btn-main" id="toggle-booking" style="background:#1f7a5c; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('booking')">展开</button>
         </div>
-        <div id="section-booking">
+        <div id="section-booking" style="display:none;">
         <div style="font-size:12px; color:#777; margin-bottom:10px;">只需输入出货地址和收件地址，系统会智能识别区域信息，并联动给出出口港、目的港、备选港、建议船司和操作提醒。当前为启发式规则版，适合前期判断。</div>
         <div class="row"><label>起运地址</label><input type="text" id="booking-origin" placeholder="例：福建省福州市仓山区"></div>
         <div class="row"><label>目的收货地址</label><input type="text" id="booking-destination" placeholder="例：日本东京都江东区 / 美国洛杉矶"></div>
@@ -594,11 +632,11 @@
     </div>
 
     <div class="module-card">
-        <div class="title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div class="title" style="display:flex; align-items:center; justify-content:flex-start; gap:8px; flex-wrap:wrap;">
             <span>贸易术语速查</span>
-            <button class="btn-main" id="toggle-incoterm" style="background:#95a5a6; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('incoterm')">折叠</button>
+            <button class="btn-main" id="toggle-incoterm" style="background:#1f7a5c; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('incoterm')">展开</button>
         </div>
-        <div id="section-incoterm">
+        <div id="section-incoterm" style="display:none;">
         <div style="overflow:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:12px;">
                 <thead>
@@ -615,22 +653,22 @@
     </div>
 
     <div class="module-card">
-        <div class="title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div class="title" style="display:flex; align-items:center; justify-content:flex-start; gap:8px; flex-wrap:wrap;">
             <span>港口/机场代码速查</span>
-            <button class="btn-main" id="toggle-portsearch" style="background:#95a5a6; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('portsearch')">折叠</button>
+            <button class="btn-main" id="toggle-portsearch" style="background:#1f7a5c; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('portsearch')">展开</button>
         </div>
-        <div id="section-portsearch">
+        <div id="section-portsearch" style="display:none;">
         <div class="row"><input type="text" id="port-search" placeholder="例：PVG / NRT / LAX / SIN" oninput="renderPortSearch()"></div>
         <div id="port-search-results"></div>
         </div>
     </div>
 
     <div class="module-card">
-        <div class="title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div class="title" style="display:flex; align-items:center; justify-content:flex-start; gap:8px; flex-wrap:wrap;">
             <span>敏感货检查</span>
-            <button class="btn-main" id="toggle-sensitive" style="background:#95a5a6; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('sensitive')">折叠</button>
+            <button class="btn-main" id="toggle-sensitive" style="background:#1f7a5c; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('sensitive')">展开</button>
         </div>
-        <div id="section-sensitive">
+        <div id="section-sensitive" style="display:none;">
         <div class="row">
             <label>客户产品信息录入</label>
             <textarea id="sensitive-product-input" rows="4" placeholder="例：蓝牙耳机，内置锂电池，带磁吸充电盒；或：面霜 100ml，含酒精；或：木制玩具，品牌货"></textarea>
@@ -655,11 +693,11 @@
     </div>
 
     <div class="module-card">
-        <div class="title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div class="title" style="display:flex; align-items:center; justify-content:flex-start; gap:8px; flex-wrap:wrap;">
             <span>费用模板</span>
-            <button class="btn-main" id="toggle-fee" style="background:#95a5a6; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('fee')">折叠</button>
+            <button class="btn-main" id="toggle-fee" style="background:#1f7a5c; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('fee')">展开</button>
         </div>
-        <div id="section-fee">
+        <div id="section-fee" style="display:none;">
         <div class="row"><label>海运费+国内港杂</label><input type="number" id="fee-ocean" value="0"></div>
         <div class="row"><label>拖车费</label><input type="number" id="fee-truck" value="0"></div>
         <div class="row"><label>报关费</label><input type="number" id="fee-customs" value="0"></div>
@@ -672,24 +710,78 @@
     </div>
 
     <div class="module-card">
-        <div class="title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div class="title" style="display:flex; align-items:center; justify-content:flex-start; gap:8px; flex-wrap:wrap;">
             <span>物流节点记录</span>
-            <button class="btn-main" id="toggle-shipment" style="background:#95a5a6; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('shipment')">折叠</button>
+            <button class="btn-main" id="toggle-shipment" style="background:#1f7a5c; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('shipment')">展开</button>
         </div>
-        <div id="section-shipment">
+        <div id="section-shipment" style="display:none;">
         <textarea id="shipment-notes" rows="8" placeholder="记录：订舱 / 放舱 / 提柜 / 报关 / 进港 / 开船 / 到港 / 清关 / 派送"></textarea>
         <div style="display:flex; gap:10px; margin-top:10px;"><button class="btn-main" style="background:#4a90e2; flex:1;" onclick="saveShipmentNotes()">保存</button><button class="btn-main" style="background:#27ae60; flex:1;" onclick="copyText(document.getElementById('shipment-notes').value)">复制</button></div>
         </div>
     </div>
 </div>
 
+<div id="tab10" class="tab-content fullpage-tab">
+    <iframe
+        id="quotation-tool-frame"
+        src="Logistics-Quotation.html"
+        title="报价单制作"
+        class="fullscreen-frame"
+        loading="lazy">
+    </iframe>
+    <button class="floating-back-btn" onclick="switchTab(9)">返回工具</button>
+</div>
+
+<div id="tab11" class="tab-content fullpage-tab">
+    <iframe
+        id="fee-tool-frame"
+        src="Intelligent-freight-generation-system.html"
+        title="费用单制作"
+        class="fullscreen-frame"
+        loading="lazy">
+    </iframe>
+    <button class="floating-back-btn" onclick="switchTab(9)">返回工具</button>
+</div>
+
+<div id="tab12" class="tab-content fullpage-tab">
+    <iframe
+        id="macro-tool-frame"
+        src="hg invest 2.html"
+        title="宏观系统"
+        class="fullscreen-frame"
+        loading="lazy">
+    </iframe>
+    <button class="floating-back-btn" onclick="switchTab(9)">返回工具</button>
+</div>
+
+<div id="tab13" class="tab-content fullpage-tab">
+    <div style="position:fixed; top:12px; left:12px; right:12px; z-index:10001; display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn-main" id="news-tab-war" style="background:#8B0000; padding:10px 14px; font-size:12px;" onclick="setNewsBrowser('war')">War</button>
+        <button class="btn-main" id="news-tab-alerts" style="background:#95a5a6; padding:10px 14px; font-size:12px;" onclick="setNewsBrowser('alerts')">预警</button>
+        <button class="btn-main" id="news-tab-news" style="background:#95a5a6; padding:10px 14px; font-size:12px;" onclick="setNewsBrowser('news')">News</button>
+    </div>
+    <iframe
+        id="news-browser-frame"
+        src="https://www.jin10.com/"
+        title="新闻浏览"
+        style="width:100%; height:calc(100vh - 56px); margin-top:56px; border:none; background:#fff; display:block;"
+        loading="lazy">
+    </iframe>
+    <button class="floating-back-btn" onclick="switchTab(9)">返回工具</button>
+</div>
+
 <div class="tab-bar">
     <div class="tab-item active" onclick="switchTab(9)"><span class="tab-icon">🧰</span><span>工具</span></div>
     <div class="tab-item" onclick="switchTab(3)"><span class="tab-icon">💴</span><span>汇率</span></div>
     <div class="tab-item" onclick="switchTab(4)"><span class="tab-icon">📅</span><span>日历</span></div>
+    <div class="tab-item" onclick="switchTab(5)"><span class="tab-icon">📈</span><span>投资</span></div>
+    <div class="tab-item" onclick="switchTab(12)"><span class="tab-icon">🌐</span><span>宏观</span></div>
+    <div class="tab-item" onclick="openNewsBrowser('news')"><span class="tab-icon">📰</span><span>新闻</span></div>
     <div class="tab-item" onclick="switchTab(6)"><span class="tab-icon">📮</span><span>邮编</span></div>
     <div class="tab-item" onclick="switchTab(7)"><span class="tab-icon">🚢</span><span>柜型</span></div>
     <div class="tab-item" onclick="switchTab(8)"><span class="tab-icon">🚚</span><span>货车</span></div>
+    <div class="tab-item" onclick="switchTab(10)"><span class="tab-icon">🧾</span><span>报价单</span></div>
+    <div class="tab-item" onclick="switchTab(11)"><span class="tab-icon">📄</span><span>费用单</span></div>
 </div>
 
 <div id="toast" class="toast">操作成功</div>
@@ -1029,8 +1121,13 @@ function switchTab(idx) {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.querySelectorAll('.tab-item').forEach(i => i.classList.remove('active'));
     document.getElementById('tab' + idx).classList.add('active');
-    const order = {9: 0, 3: 1, 4: 2, 6: 3, 7: 4, 8: 5};
+    const order = {9: 0, 3: 1, 4: 2, 5: 3, 12: 4, 13: 5, 6: 6, 7: 7, 8: 8, 10: 9, 11: 10};
     document.querySelectorAll('.tab-item')[order[idx]].classList.add('active');
+    const tabBar = document.querySelector('.tab-bar');
+    if (tabBar) {
+        if ([5, 10, 11, 12, 13].includes(idx)) tabBar.classList.add('hidden');
+        else tabBar.classList.remove('hidden');
+    }
     if (idx !== 9) {
         const panel = document.getElementById('timeis-panel');
         const btn = document.getElementById('timeis-toggle-btn');
@@ -2766,6 +2863,60 @@ function toggleTimeIsPanel() {
     } else {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+}
+
+function toggleToolSection(name) {
+    const section = document.getElementById(`section-${name}`);
+    const button = document.getElementById(`toggle-${name}`);
+    if (!section || !button) return;
+    const opening = section.style.display === 'none';
+    section.style.display = opening ? 'block' : 'none';
+    button.innerText = opening ? '折叠' : '展开';
+    button.style.background = opening ? '#95a5a6' : '#1f7a5c';
+}
+
+function openLabelTool() {
+    const modal = document.getElementById('label-tool-modal');
+    if (!modal) return;
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeLabelTool() {
+    const modal = document.getElementById('label-tool-modal');
+    if (!modal) return;
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+function refreshLabelTool() {
+    const frame = document.getElementById('label-tool-frame');
+    if (!frame) return;
+    frame.src = frame.src;
+}
+
+function setNewsBrowser(type) {
+    const frame = document.getElementById('news-browser-frame');
+    if (!frame) return;
+    const sources = {
+        war: 'https://iran.immersivetranslate.com/zh-CN/',
+        alerts: 'hg invest 2.html',
+        news: 'https://www.jin10.com/'
+    };
+    frame.src = sources[type] || sources.news;
+    const ids = ['war', 'alerts', 'news'];
+    ids.forEach(id => {
+        const btn = document.getElementById(`news-tab-${id}`);
+        if (!btn) return;
+        btn.style.background = id === type
+            ? (id === 'war' ? '#8B0000' : id === 'alerts' ? '#f59e0b' : '#ff6a00')
+            : '#95a5a6';
+    });
+}
+
+function openNewsBrowser(type = 'news') {
+    switchTab(13);
+    setNewsBrowser(type);
 }
 
 function resolveOriginPort(address) {
