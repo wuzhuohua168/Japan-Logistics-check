@@ -77,6 +77,7 @@
         .stat-label { font-size: 11px; color: #7b8794; margin-bottom: 4px; }
         .stat-value { font-size: 18px; font-weight: bold; color: #2c3e50; }
         .stat-sub { font-size: 11px; color: #6f7d8a; margin-top: 4px; line-height: 1.5; }
+        .backup-inline { font-size: 10px; color: #7f8c8d; margin-top: 4px; text-align: right; }
         .market-quote-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .market-quote-tile { position: relative; display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: center; min-height: 34px; padding: 4px 8px; border-radius: 10px; border: 1px solid #dfe8f2; background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%); box-shadow: 0 4px 10px rgba(31, 58, 93, 0.04); overflow: hidden; cursor: pointer; gap: 6px; }
         .market-quote-label { font-size: 10px; color: #607080; margin-bottom: 0; font-weight: 700; line-height: 1; white-space: nowrap; }
@@ -512,6 +513,7 @@
                     </div>
                 </div>
                 <div class="stat-sub" id="dashboard-rates-info">汇率加载中...</div>
+                <div class="backup-inline" id="dashboard-backup-inline">自动备份：未记录</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">本月提醒</div>
@@ -3943,6 +3945,9 @@ let selectedCountry = 'JP';
 let trendDays = 30;
 let trendPoints = [];
 const APP_STATE_KEY = 'logistics_workbench_state_v1';
+const APP_DB_NAME = 'logistics_workbench_db';
+const APP_DB_STORE = 'kv';
+const APP_EXTRA_STORAGE_KEYS = ['hcn_calendar_memos','hcn_rates_cache','shipment_notes_v1','dashboard_todos_v1','freight_air_cache_v1','freight_fcl_cache_v1'];
 let saveTimer = null;
 let cloudFileHandle = null;
 let lastSavedAt = '';
@@ -3956,6 +3961,65 @@ const HOME_QUOTE_SYMBOLS = [
     { label: 'HY利差', symbol: 'BAMLH0A0HYM2' },
     { label: '通胀预期', symbol: 'FRED:T5YIE' }
 ];
+
+
+function openAppDb() {
+    return new Promise((resolve, reject) => {
+        if (!window.indexedDB) {
+            resolve(null);
+            return;
+        }
+        const request = indexedDB.open(APP_DB_NAME, 1);
+        request.onupgradeneeded = () => {
+            const db = request.result;
+            if (!db.objectStoreNames.contains(APP_DB_STORE)) db.createObjectStore(APP_DB_STORE);
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+async function idbSet(key, value) {
+    const db = await openAppDb();
+    if (!db) return;
+    await new Promise((resolve, reject) => {
+        const tx = db.transaction(APP_DB_STORE, 'readwrite');
+        tx.objectStore(APP_DB_STORE).put(value, key);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+    });
+    db.close();
+}
+
+async function idbGet(key) {
+    const db = await openAppDb();
+    if (!db) return null;
+    const value = await new Promise((resolve, reject) => {
+        const tx = db.transaction(APP_DB_STORE, 'readonly');
+        const req = tx.objectStore(APP_DB_STORE).get(key);
+        req.onsuccess = () => resolve(req.result ?? null);
+        req.onerror = () => reject(req.error);
+    }).catch(() => null);
+    db.close();
+    return value;
+}
+
+function gatherExtraStorageState() {
+    const extras = {};
+    APP_EXTRA_STORAGE_KEYS.forEach(key => {
+        const value = localStorage.getItem(key);
+        if (value !== null) extras[key] = value;
+    });
+    return extras;
+}
+
+function restoreExtraStorageState(extras) {
+    if (!extras || typeof extras !== 'object') return;
+    Object.entries(extras).forEach(([key, value]) => {
+        if (typeof value === 'string') localStorage.setItem(key, value);
+    });
+}
 
 const HOME_QUOTE_TV_SYMBOL_MAP = {
     'SP500/WTI': 'SP500/WTI',
@@ -4262,9 +4326,9 @@ const PREFS = [
     '福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県'
 ];
 
-window.onload = () => {
+window.onload = async () => {
     initRates();
-    restoreAppState();
+    await restoreAppState();
     renderContainerTable();
     renderShippingTable();
     renderTruckTable();
@@ -5821,6 +5885,17 @@ function renderDashboardTodos(todos) {
 function initAutoSave() {
     document.addEventListener('input', handleAutoSaveEvent, true);
     document.addEventListener('change', handleAutoSaveEvent, true);
+    document.addEventListener('visibilitychange', handleAutoBackupLifecycle, true);
+    window.addEventListener('pagehide', handleAutoBackupLifecycle, true);
+    window.addEventListener('beforeunload', handleAutoBackupLifecycle, true);
+}
+
+function handleAutoBackupLifecycle(evt) {
+    if (evt && evt.type === 'visibilitychange' && document.visibilityState !== 'hidden') return;
+    try {
+        const payload = saveAppStateSync();
+        idbSet(APP_STATE_KEY, payload).catch(() => null);
+    } catch (e) {}
 }
 
 function handleAutoSaveEvent(event) {
@@ -5851,24 +5926,40 @@ function gatherAppState() {
         controls,
         memos,
         shipmentNotes: document.getElementById('shipment-notes')?.value || '',
-        dashboardTodos: JSON.parse(localStorage.getItem('dashboard_todos_v1') || '[]')
+        dashboardTodos: JSON.parse(localStorage.getItem('dashboard_todos_v1') || '[]'),
+        extras: gatherExtraStorageState()
     };
 }
 
-function saveAppStateToLocal() {
+function saveAppStateSync() {
     const state = gatherAppState();
-    localStorage.setItem(APP_STATE_KEY, JSON.stringify(state));
+    const payload = JSON.stringify(state);
+    localStorage.setItem(APP_STATE_KEY, payload);
     lastSavedAt = state.savedAt;
+    return payload;
 }
 
-function saveAppStateNow() {
-    saveAppStateToLocal();
+async function saveAppStateToLocal() {
+    const payload = saveAppStateSync();
+    try {
+        await idbSet(APP_STATE_KEY, payload);
+    } catch (e) {}
+}
+
+async function saveAppStateNow() {
+    await saveAppStateToLocal();
     updateStorageStatus();
     showToast('本地数据已保存');
 }
 
-function restoreAppState() {
-    const raw = localStorage.getItem(APP_STATE_KEY);
+async function restoreAppState() {
+    let raw = localStorage.getItem(APP_STATE_KEY);
+    if (!raw) {
+        try {
+            raw = await idbGet(APP_STATE_KEY);
+            if (raw) localStorage.setItem(APP_STATE_KEY, raw);
+        } catch (e) {}
+    }
     if (!raw) return;
     try {
         const state = JSON.parse(raw);
@@ -5896,6 +5987,7 @@ function applyAppState(state) {
     if (Array.isArray(state.dashboardTodos)) {
         localStorage.setItem('dashboard_todos_v1', JSON.stringify(state.dashboardTodos));
     }
+    restoreExtraStorageState(state.extras);
 }
 
 function exportAppState() {
@@ -5916,15 +6008,15 @@ function triggerImportState() {
     if (input) input.click();
 }
 
-function importAppStateFromFile(event) {
+async function importAppStateFromFile(event) {
     const file = event.target.files && event.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
         try {
             const state = JSON.parse(reader.result);
             applyAppState(state);
-            saveAppStateToLocal();
+            await saveAppStateToLocal();
             renderDashboardTodos(JSON.parse(localStorage.getItem('dashboard_todos_v1') || '[]'));
             loadShipmentNotes();
             renderGlobalSearch();
@@ -5986,23 +6078,35 @@ function clearCloudBinding() {
     showToast('已清除云端绑定');
 }
 
-function updateStorageStatus() {
+async function updateStorageStatus() {
     const el = document.getElementById('storage-status');
     if (!el) return;
-    const localState = localStorage.getItem(APP_STATE_KEY);
+    let localState = localStorage.getItem(APP_STATE_KEY);
+    if (!localState) {
+        try {
+            localState = await idbGet(APP_STATE_KEY);
+        } catch (e) {}
+    }
     const cloudName = cloudFileHandle ? cloudFileHandle.name : '未绑定';
+    const inlineEl = document.getElementById('dashboard-backup-inline');
     let localInfo = '本地自动保存：未初始化';
+    let inlineText = '自动备份：未记录';
     if (localState) {
         try {
             const state = JSON.parse(localState);
-            localInfo = `本地自动保存：已启用\n最后保存：${formatReadableTime(state.savedAt || lastSavedAt)}`;
+            const savedText = formatReadableTime(state.savedAt || lastSavedAt);
+            localInfo = `本地自动保存：已启用
+最后保存：${savedText}`;
+            inlineText = `自动备份：${savedText}`;
         } catch (e) {
             localInfo = '本地自动保存：已启用';
+            inlineText = '自动备份：已启用';
         }
     }
-    el.innerText = `${localInfo}\n云端文件：${cloudName}`;
+    el.innerText = `${localInfo}
+云端文件：${cloudName}`;
+    if (inlineEl) inlineEl.innerText = inlineText;
 }
-
 function formatReadableTime(iso) {
     if (!iso) return '未记录';
     const date = new Date(iso);
