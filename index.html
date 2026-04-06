@@ -782,9 +782,6 @@
     <div class="tab-item active" onclick="switchTab(9)"><span class="tab-icon">🧰</span><span>工具</span></div>
     <div class="tab-item" onclick="switchTab(3)"><span class="tab-icon">💴</span><span>汇率</span></div>
     <div class="tab-item" onclick="switchTab(4)"><span class="tab-icon">📅</span><span>日历</span></div>
-    <div class="tab-item" onclick="switchTab(5)"><span class="tab-icon">📈</span><span>投资</span></div>
-    <div class="tab-item" onclick="switchTab(12)"><span class="tab-icon">🌐</span><span>宏观</span></div>
-    <div class="tab-item" onclick="openNewsBrowser('war')"><span class="tab-icon">📰</span><span>新闻</span></div>
     <div class="tab-item" onclick="switchTab(6)"><span class="tab-icon">📮</span><span>邮编</span></div>
     <div class="tab-item" onclick="switchTab(7)"><span class="tab-icon">🚢</span><span>柜型</span></div>
     <div class="tab-item" onclick="switchTab(8)"><span class="tab-icon">🚚</span><span>货车</span></div>
@@ -4208,7 +4205,7 @@ function switchTab(idx) {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.querySelectorAll('.tab-item').forEach(i => i.classList.remove('active'));
     document.getElementById('tab' + idx).classList.add('active');
-    const order = {9: 0, 3: 1, 4: 2, 5: 3, 12: 4, 13: 5, 6: 6, 7: 7, 8: 8, 10: 9, 11: 10};
+    const order = {9: 0, 3: 1, 4: 2, 6: 3, 7: 4, 8: 5, 10: 6, 11: 7};
     if (order[idx] !== undefined) document.querySelectorAll('.tab-item')[order[idx]].classList.add('active');
     const tabBar = document.querySelector('.tab-bar');
     if (tabBar) {
