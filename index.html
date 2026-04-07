@@ -3611,7 +3611,7 @@
 <div class="toast" id="toast">复制成功！</div>
 
 <script>
-let fileNameData = { mode: "", sn: "" };
+let fileNameData = { mode: "", mainTracking: "", total: 0 };
 let generatedData = [];
 
 function toggleCustomMode() {
@@ -3644,7 +3644,8 @@ function handleGenerate() {
     const randomSuffix = Math.floor(Math.random() * 9000 + 1000);
     
     fileNameData.mode = modeText;
-    fileNameData.sn = `${prefix}${dateStr}${randomSuffix}1`;
+    fileNameData.mainTracking = `${prefix}${dateStr}${randomSuffix}1`;
+    fileNameData.total = qty;
 
     generatedData = [];
 
@@ -3811,7 +3812,10 @@ async function handleExport() {
     container.classList.add('export-mode');
     window.scrollTo(0, 0);
 
-    const name = `${fileNameData.mode}_${fileNameData.sn}.pdf`;
+    const safeMode = String(fileNameData.mode || '物流标签').replace(/[\/:*?"<>|]+/g, '-').trim();
+    const safeTracking = String(fileNameData.mainTracking || generatedData[0]?.tracking || 'data').replace(/[\/:*?"<>|]+/g, '-').trim();
+    const safeQty = Number(fileNameData.total || generatedData.length || 0);
+    const name = `${safeMode}_${safeTracking}_${safeQty}件.pdf`;
     const pages = container.querySelectorAll('.page-wrapper');
     const labelSize = document.getElementById('label-size').value;
     
