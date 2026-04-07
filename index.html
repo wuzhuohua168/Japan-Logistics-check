@@ -3644,14 +3644,14 @@ function handleGenerate() {
     const randomSuffix = Math.floor(Math.random() * 9000 + 1000);
     
     fileNameData.mode = modeText;
-    fileNameData.mainTracking = `${prefix}${dateStr}${randomSuffix}1`;
+    fileNameData.mainTracking = `${prefix}${dateStr}${randomSuffix}`;
     fileNameData.total = qty;
 
     generatedData = [];
 
     for(let i=1; i<=qty; i++) {
-        const tracking = `${prefix}${dateStr}${randomSuffix}${i}`;
-        const barcodeData = `${tracking}-${i}/${qty}`;
+        const tracking = `${fileNameData.mainTracking}_${i}`;
+        const barcodeData = `${tracking} | ${i}/${qty}`;
         
         generatedData.push({
             mode: modeText,
@@ -3749,8 +3749,7 @@ function updateCopyButtons() {
     if (generatedData.length > 0) {
         const firstData = generatedData[0];
         const totalQty = generatedData.length;
-        const tracking = firstData.tracking;
-        const trackingPrefix = tracking.slice(0, -1);
+        const trackingPrefix = fileNameData.mainTracking || firstData.tracking || '';
         const copyText = `${firstData.mode} ${trackingPrefix} ${totalQty}件`;
         
         const item = document.createElement('div');
@@ -3894,7 +3893,7 @@ async function handleExportCsv() {
         }).join(',')
     ).join('\n');
 
-    const fileName = `${fileNameData.mode || '物流标签'}_${fileNameData.sn || 'data'}.csv`;
+    const fileName = `${fileNameData.mode || '物流标签'}_${fileNameData.mainTracking || 'data'}_${fileNameData.total || generatedData.length || 0}件.csv`;
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
     const file = new File([blob], fileName, { type: 'text/csv;charset=utf-8;' });
 
