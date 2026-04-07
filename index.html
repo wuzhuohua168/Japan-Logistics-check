@@ -3650,7 +3650,7 @@ function handleGenerate() {
     generatedData = [];
 
     for(let i=1; i<=qty; i++) {
-        const tracking = `${fileNameData.mainTracking}_${i}`;
+        const tracking = `${fileNameData.mainTracking}-${i}`;
         const barcodeData = `${tracking} | ${i}/${qty}`;
         
         generatedData.push({
