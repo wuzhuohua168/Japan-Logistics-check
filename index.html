@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CRM系统无密码版</title>
+    <title>HGCD CRM system</title>
     <!-- BUILD: 20260411-1243 -->
 
     <script src="https://cdn.jsdelivr.net/npm/lunar-javascript/lunar.js"></script>
@@ -17,6 +17,21 @@
             linear-gradient(180deg, #eef5fb 0%, #f7fafc 48%, #edf3f8 100%);
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", sans-serif;
             height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        body.locked { overflow: hidden; }
+        #login-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        #login-screen.hidden { display: none; }
+        .login-card { background: rgba(255,255,255,0.95); border-radius: 24px; padding: 40px 32px; width: 90%; max-width: 360px; box-shadow: 0 25px 80px rgba(0,0,0,0.25); text-align: center; }
+        .login-logo { font-size: 48px; margin-bottom: 16px; }
+        .login-title { font-size: 24px; font-weight: bold; color: #2c3e50; margin-bottom: 8px; }
+        .login-subtitle { font-size: 13px; color: #888; margin-bottom: 28px; }
+        .login-input { width: 100%; padding: 14px 18px; border: 2px solid #e0e6ed; border-radius: 12px; font-size: 16px; margin-bottom: 16px; transition: border-color 0.2s; outline: none; }
+        .login-input:focus { border-color: #667eea; }
+        .login-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102,126,234,0.4); }
+        .login-btn:active { transform: translateY(0); }
+        .login-error { color: #e74c3c; font-size: 12px; margin-top: 12px; display: none; }
+        .login-set-pwd { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+        .login-set-pwd input { margin-bottom: 12px; }
         .tab-content { display: none; padding: 12px; flex: 1; overflow-y: auto; padding-bottom: 84px; }
         .tab-content.active { display: block; }
         .tab-content.fullpage-tab { padding: 0; padding-bottom: 0; overflow: hidden; background: #fff; }
@@ -324,6 +339,27 @@
     </style>
 </head>
 <body>
+<!-- 登录界面 -->
+<div id="login-screen">
+    <div class="login-card">
+        <div class="login-logo">🔐</div>
+        <div class="login-title">HGCD CRM System</div>
+        <div class="login-subtitle">请输入密码解锁系统</div>
+        <div id="login-form">
+            <input type="password" id="login-password" class="login-input" placeholder="请输入密码" onkeypress="if(event.key==='Enter')handleLogin()">
+            <button class="login-btn" onclick="handleLogin()">解锁系统</button>
+            <div id="login-error" class="login-error">密码错误，请重试</div>
+        </div>
+        <div id="set-password-form" style="display:none;">
+            <div style="font-size:13px;color:#666;margin-bottom:16px;">首次使用，请设置系统密码</div>
+            <input type="password" id="new-password" class="login-input" placeholder="设置新密码（至少4位）">
+            <input type="password" id="confirm-password" class="login-input" placeholder="确认新密码">
+            <button class="login-btn" onclick="setNewPassword()">设置密码</button>
+            <div id="set-pwd-error" class="login-error">请完整填写所有信息</div>
+        </div>
+    </div>
+</div>
+
 <!-- 全局预览卡片 -->
 <div id="global-preview-card" class="preview-card"></div>
 
@@ -682,6 +718,7 @@
             <div class="title-btns" style="flex-direction:column; align-items:flex-end; gap:4px;">
                 <div style="display:flex; gap:6px;">
                     <button style="background:linear-gradient(135deg, rgba(231,76,60,0.12), rgba(231,76,60,0.06)); color:#5d6d7e; border:1px solid rgba(231,76,60,0.2); padding:6px 10px; font-size:12px; border-radius:8px; cursor:pointer; font-weight:500;" onclick="quickBackup()">📥 一键备份</button>
+                    <button style="background:linear-gradient(135deg, rgba(155,89,182,0.12), rgba(155,89,182,0.06)); color:#5d6d7e; border:1px solid rgba(155,89,182,0.2); padding:6px 10px; font-size:12px; border-radius:8px; cursor:pointer; font-weight:500;" onclick="lockSystem()">🔒 快捷上锁</button>
                 </div>
                 <div style="font-size:10px; color:#7f8c8d;" id="dashboard-backup-inline">备份时间：未记录</div>
             </div>
@@ -856,6 +893,9 @@
         <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
             <button class="btn-main" style="background:#16a085; flex:1;" onclick="syncToCloudFile()">同步到已绑定文件</button>
             <button class="btn-main" style="background:#95a5a6; flex:1;" onclick="clearCloudBinding()">清除云端绑定</button>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+            <button class="btn-main" style="background:#e74c3c; flex:1;" onclick="lockSystem()">🔒 锁定系统</button>
         </div>
         <div style="margin-top:10px; font-size:12px; color:#777; line-height:1.7;">
             默认会自动保存到当前浏览器本地。<br>
@@ -4600,6 +4640,144 @@
 <div id="toast" class="toast">操作成功</div>
 
 <script>
+const PASSWORD_KEY = 'crm_system_password_hash';
+const SESSION_KEY = 'crm_system_session';
+const LOCK_TIMEOUT = 30 * 60 * 1000;
+let lastActivityTime = Date.now();
+
+function simpleHash(str){
+    let hash = 0;
+    for(let i = 0; i < str.length; i++){
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+    return hash.toString(16);
+}
+
+function hasPassword(){
+    return localStorage.getItem(PASSWORD_KEY) !== null;
+}
+
+function checkSession(){
+    const session = sessionStorage.getItem(SESSION_KEY);
+    if(!session) return false;
+    try {
+        const data = JSON.parse(session);
+        return data && data.timestamp;
+    } catch(e) {
+        return false;
+    }
+}
+
+function createSession(){
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ timestamp: Date.now() }));
+}
+
+function clearSession(){
+    sessionStorage.removeItem(SESSION_KEY);
+}
+
+function showLoginForm(){
+    document.getElementById('login-screen').classList.remove('hidden');
+    document.getElementById('login-form').style.display = 'block';
+    document.getElementById('set-password-form').style.display = 'none';
+    document.getElementById('login-password').value = '';
+    document.getElementById('login-error').style.display = 'none';
+    document.body.classList.add('locked');
+}
+
+function showSetPasswordForm(){
+    document.getElementById('login-screen').classList.remove('hidden');
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('set-password-form').style.display = 'block';
+    document.getElementById('new-password').value = '';
+    document.getElementById('confirm-password').value = '';
+    document.getElementById('set-pwd-error').style.display = 'none';
+    document.body.classList.add('locked');
+}
+
+function hideLoginScreen(){
+    document.getElementById('login-screen').classList.add('hidden');
+    document.body.classList.remove('locked');
+}
+
+function handleLogin(){
+    const password = document.getElementById('login-password').value;
+    const storedHash = localStorage.getItem(PASSWORD_KEY);
+    const inputHash = simpleHash(password);
+    
+    if(inputHash === storedHash){
+        createSession();
+        hideLoginScreen();
+        initAllModules();
+    } else {
+        document.getElementById('login-error').style.display = 'block';
+        document.getElementById('login-password').value = '';
+        document.getElementById('login-password').focus();
+    }
+}
+
+function setNewPassword(){
+    const newPwd = document.getElementById('new-password').value;
+    const confirmPwd = document.getElementById('confirm-password').value;
+    
+    if(newPwd.length < 4 || newPwd !== confirmPwd){
+        document.getElementById('set-pwd-error').style.display = 'block';
+        return;
+    }
+    
+    const hash = simpleHash(newPwd);
+    localStorage.setItem(PASSWORD_KEY, hash);
+    createSession();
+    hideLoginScreen();
+    initAllModules();
+    showToast('密码设置成功');
+}
+
+function lockSystem(){
+    clearSession();
+    showLoginForm();
+}
+
+function updateActivity(){
+    lastActivityTime = Date.now();
+}
+
+function checkAutoLock(){
+    if(hasPassword() && !checkSession()){
+        showLoginForm();
+    }
+}
+
+document.addEventListener('click', updateActivity);
+document.addEventListener('keydown', updateActivity);
+document.addEventListener('mousemove', updateActivity);
+document.addEventListener('touchstart', updateActivity);
+
+setInterval(() => {
+    if(hasPassword() && Date.now() - lastActivityTime > LOCK_TIMEOUT){
+        lockSystem();
+    }
+}, 60000);
+
+document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible'){
+        checkAutoLock();
+    }
+});
+
+function initAuth(){
+    if(!hasPassword()){
+        showSetPasswordForm();
+    } else if(checkSession()){
+        hideLoginScreen();
+        initAllModules();
+    } else {
+        showLoginForm();
+    }
+}
+
 let currDate = new Date(), rates = {}, memos = JSON.parse(localStorage.getItem('hcn_calendar_memos') || '{}');
 let selectedCountry = 'JP';
 let trendDays = 30;
@@ -10929,7 +11107,7 @@ function initNewModules(){
 }
 
 window.onload = function(){
-    initAllModules();
+    initAuth();
 };
 </script>
 
