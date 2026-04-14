@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CRM系统</title>
+    <title>CRM系统无密码版</title>
     <!-- BUILD: 20260411-1243 -->
 
     <script src="https://cdn.jsdelivr.net/npm/lunar-javascript/lunar.js"></script>
@@ -7888,6 +7888,7 @@ function crmShowDetail(id) {
         ${section(isLcl ? '运单 & 单号' : '提单 & 单号', [[isLcl ? '运单号' : '主单号 MBL', fmt(r.mbl)], [isLcl ? '参考单号' : '分单号 HBL', fmt(r.hbl)]])}
         ${section('航线 & 船务', [
             ['起运港', fmt(r.pol)], ['目的港', fmt(r.pod)],
+            ['发货地址', fmt(r.shipaddr)], ['收货地址', fmt(r.recvaddr)],
             [isLcl ? '运输方式' : '柜型/数量', isLcl ? fmt(r.shipMode) : (r.ctype ? `${r.ctype} × ${r.cqty||1}` : '—')],
             ['船公司', fmt(r.carrier)],
             ['船名/航次', fmt(r.vessel)],
