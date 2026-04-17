@@ -11132,7 +11132,91 @@ function initNewModules(){
 
 window.onload = function(){
     initAllModules();
+    initSwipeGestures();
 };
+
+let touchStartX = 0;
+let touchStartY = 0;
+let touchEndX = 0;
+let touchEndY = 0;
+let isSwiping = false;
+
+function initSwipeGestures() {
+    const minSwipeDistance = 50;
+    const maxVerticalDistance = 100;
+    
+    document.body.addEventListener('touchstart', function(e) {
+        if (e.touches.length > 1) return;
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        isSwiping = true;
+    }, { passive: true });
+    
+    document.body.addEventListener('touchend', function(e) {
+        if (!isSwiping) return;
+        if (e.changedTouches.length === 0) return;
+        
+        touchEndX = e.changedTouches[0].clientX;
+        touchEndY = e.changedTouches[0].clientY;
+        isSwiping = false;
+        
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = Math.abs(touchEndY - touchStartY);
+        
+        if (Math.abs(deltaX) < minSwipeDistance) return;
+        if (deltaY > maxVerticalDistance) return;
+        
+        if (deltaX > 0) {
+            if (window.history.length > 1) {
+                showSwipeToast('后退');
+                window.history.back();
+            } else {
+                showSwipeToast('无历史记录');
+            }
+        } else {
+            if (window.history.length > 1) {
+                showSwipeToast('前进');
+                window.history.forward();
+            } else {
+                showSwipeToast('无历史记录');
+            }
+        }
+    }, { passive: true });
+}
+
+function showSwipeToast(message) {
+    const existing = document.getElementById('swipe-toast');
+    if (existing) existing.remove();
+    
+    const toast = document.createElement('div');
+    toast.id = 'swipe-toast';
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.75);
+        color: #fff;
+        padding: 14px 28px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        z-index: 99999;
+        pointer-events: none;
+        opacity: 1;
+        transition: opacity 0.3s ease;
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => {
+            if (toast.parentNode) toast.remove();
+        }, 300);
+    }, 800);
+}
 </script>
 
 <template id="template-macro">
