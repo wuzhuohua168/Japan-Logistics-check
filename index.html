@@ -480,6 +480,37 @@
     </style>
 </head>
 <body>
+<!-- API配置弹窗 -->
+<div id="api-config-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; justify-content:center; align-items:center;">
+    <div style="background:var(--bg-primary); border-radius:12px; padding:24px; width:400px; max-width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+        <div style="font-size:18px; font-weight:bold; margin-bottom:20px; color:var(--text-primary);">⚙️ Cloudflare API 配置</div>
+        <div style="margin-bottom:16px;">
+            <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:6px; color:var(--text-secondary);">API URL</label>
+            <input type="text" id="config-api-url" placeholder="https://your-worker.workers.dev" style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-primary); color:var(--text-primary);">
+        </div>
+        <div style="margin-bottom:16px;">
+            <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:6px; color:var(--text-secondary);">API Key</label>
+            <input type="text" id="config-api-key" placeholder="输入你的API密钥" style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-primary); color:var(--text-primary);">
+        </div>
+        <div style="margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; padding:12px; background:var(--bg-gray); border-radius:8px;">
+            <div>
+                <div style="font-size:14px; font-weight:bold; color:var(--text-primary);">自动同步</div>
+                <div style="font-size:12px; color:var(--text-secondary);">保存订单时自动同步到云端</div>
+            </div>
+            <label style="position:relative; display:inline-block; width:50px; height:26px; cursor:pointer;">
+                <input type="checkbox" id="config-auto-sync" style="opacity:0; width:0; height:0; position:absolute;">
+                <span id="auto-sync-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#ccc; transition:0.3s; border-radius:26px;"></span>
+                <span id="auto-sync-dot" style="position:absolute; height:20px; width:20px; left:3px; bottom:3px; background-color:white; transition:0.3s; border-radius:50%; pointer-events:none;"></span>
+            </label>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button onclick="saveApiConfig()" style="flex:1; padding:10px; background:#9b59b6; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">保存配置</button>
+            <button onclick="hideApiConfig()" style="flex:1; padding:10px; background:#95a5a6; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">取消</button>
+        </div>
+        <div id="api-config-status" style="margin-top:12px; font-size:13px; text-align:center; display:none;"></div>
+    </div>
+</div>
+
 <!-- 全局预览卡片 -->
 <div id="global-preview-card" class="preview-card"></div>
 
@@ -1184,6 +1215,9 @@
                 <button class="btn-main" id="crm-select-toggle" style="background:#f39c12; padding:8px 14px;" onclick="crmToggleSelectMode()">☑ 勾选</button>
                 <button class="btn-main" style="background:#e74c3c; padding:8px 14px;" onclick="crmExportPDF()">导出PDF</button>
                 <button class="btn-main" style="background:#27ae60; padding:8px 14px;" onclick="crmExportCSV()">导出CSV</button>
+                <button class="btn-main" style="background:#9b59b6; padding:8px 14px;" onclick="crmExportTracking()">📤 同步到云端</button>
+                <button class="btn-main" style="background:#16a085; padding:8px 14px;" onclick="crmRestoreFromCloud()">📥 从云端恢复</button>
+                <button class="btn-main" style="background:#34495e; padding:8px 14px;" onclick="showApiConfig()">⚙️ API设置</button>
             </div>
         </div>
         <!-- 搜索 + 状态筛选 -->
@@ -1192,7 +1226,9 @@
             <select id="crm-filter-status" onchange="crmRender()" style="padding:8px 10px; border:1px solid #ddd; border-radius:8px; font-size:12px; background:#fff;">
                 <option value="">全部状态</option>
                 <option value="询价">询价</option>
-                <option value="已订舱">已订舱</option>
+                <option value="已下单">已下单</option>
+                <option value="已入库">已入库</option>
+                <option value="已审单">已审单</option>
                 <option value="已装柜">已装柜</option>
                 <option value="已开船">已开船</option>
                 <option value="已到港">已到港</option>
@@ -1398,7 +1434,12 @@
                     </div>
                     <div id="crm-lcl-ship-wrap">
                         <label id="crm-lcl-ship-label" style="font-size:11px; color:#666; display:block; margin-bottom:4px;">运输方式</label>
-                        <input type="text" id="crm-f-shipmode" placeholder="如 空运 / 海运散货 / 快递" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                        <select id="crm-f-shipmode" onchange="crmToggleShipMode()" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; background:#fff;">
+                            <option value="">请选择</option>
+                            <option value="海运散货">海运散货</option>
+                            <option value="空运">空运</option>
+                            <option value="快递">快递</option>
+                        </select>
                     </div>
                 </div>
 
@@ -1483,7 +1524,8 @@
 
                 <!-- 关键日期 -->
                 <div style="font-size:12px; font-weight:bold; color:#4a90e2; margin-bottom:8px;">关键日期</div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                <!-- 海运散货日期 -->
+                <div id="crm-sea-dates" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
                     <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">截关日 (SI/VGM)</label>
                         <input type="date" id="crm-f-cutoff" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
@@ -1508,6 +1550,25 @@
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">免柜期截止</label>
                         <input type="date" id="crm-f-freetime" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">签收时间</label>
+                        <input type="date" id="crm-f-signed" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                </div>
+                <!-- 空运日期 -->
+                <div id="crm-air-dates" style="display:none; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">入仓日期</label>
+                        <input type="date" id="crm-f-warehouse" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">空运航班日期</label>
+                        <input type="date" id="crm-f-flight" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">签收时间</label>
+                        <input type="date" id="crm-f-air-signed" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
                 </div>
 
                 <div id="crm-fcl-fee-area">
@@ -1529,6 +1590,18 @@
                     <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">税金</label>
                         <input type="number" id="crm-f-fee-tax" placeholder="0" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">查验费</label>
+                        <input type="number" id="crm-f-fee-inspection" placeholder="0" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">商检费</label>
+                        <input type="number" id="crm-f-fee-commodity" placeholder="0" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">熏蒸费</label>
+                        <input type="number" id="crm-f-fee-fumigation" placeholder="0" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
                     <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">其他费用</label>
@@ -1581,6 +1654,18 @@
                             <input type="number" id="crm-f-lcl-tax" placeholder="0.00" step="0.01" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                         </div>
                         <div>
+                            <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">商检费</label>
+                            <input type="number" id="crm-f-lcl-commodity" placeholder="0.00" step="0.01" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">熏蒸费</label>
+                            <input type="number" id="crm-f-lcl-fumigation" placeholder="0.00" step="0.01" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">尾端派送费</label>
+                            <input type="number" id="crm-f-lcl-delivery" placeholder="0.00" step="0.01" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                        </div>
+                        <div>
                             <label style="font-size:11px; color:#999; display:block; margin-bottom:4px;">应收合计（自动）</label>
                             <div id="crm-f-lcl-total" style="padding:9px; background:#f7fbff; border:1px solid #d5e5f5; border-radius:8px; font-size:13px; font-weight:bold; color:#2c7be5;">¥ 0</div>
                         </div>
@@ -1601,6 +1686,10 @@
                             <input type="number" id="crm-f-lcl-cost-tax" placeholder="0.00" step="0.01" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                         </div>
                         <div>
+                            <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">尾端派送费</label>
+                            <input type="number" id="crm-f-lcl-cost-delivery" placeholder="0.00" step="0.01" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                        </div>
+                        <div>
                             <label style="font-size:11px; color:#999; display:block; margin-bottom:4px;">应付合计（自动）</label>
                             <div id="crm-f-lcl-cost-total" style="padding:9px; background:#fff8f0; border:1px solid #f0d5a8; border-radius:8px; font-size:13px; font-weight:bold; color:#e67e22;">¥ 0</div>
                         </div>
@@ -1615,6 +1704,28 @@
                     </div>
                 </div>
 
+                <!-- 快递信息 -->
+                <div style="font-size:12px; font-weight:bold; color:#4a90e2; margin-bottom:8px;">快递信息</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">快递单号</label>
+                        <input type="text" id="crm-f-tracking" placeholder="输入快递单号" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">快递公司</label>
+                        <select id="crm-f-carrier-type" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; background:#fff;">
+                            <option value="">请选择</option>
+                            <option value="sagawa">佐川急便</option>
+                            <option value="kuroneko">黑猫宅急便 (雅玛多)</option>
+                            <option value="japanpost">日本邮政</option>
+                            <option value="fukutsu">福山通运</option>
+                            <option value="seino">西浓运输</option>
+                            <option value="daiichi">第一货物</option>
+                            <option value="other">其他</option>
+                        </select>
+                    </div>
+                </div>
+
                 <!-- 状态 + 备注 -->
                 <div style="font-size:12px; font-weight:bold; color:#4a90e2; margin-bottom:8px;">状态 & 备注</div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
@@ -1622,7 +1733,9 @@
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">当前状态</label>
                         <select id="crm-f-status" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; background:#fff;">
                             <option value="询价">询价</option>
-                            <option value="已订舱">已订舱</option>
+                            <option value="已下单">已下单</option>
+                            <option value="已入库">已入库</option>
+                            <option value="已审单">已审单</option>
                             <option value="已装柜">已装柜</option>
                             <option value="已开船">已开船</option>
                             <option value="已到港">已到港</option>
@@ -6711,7 +6824,7 @@ GlobalSearchRegistry.register({
     storageKey: 'hgcd_crm_fcl_v1',
     searchFields: ['orderno', 'mbl', 'hbl', 'client', 'pol', 'pod', 'shipaddr', 'recvaddr', 'status', 'carrier'],
     colorField: 'status',
-    colorMap: {'询价':'#8e44ad','已订舱':'#2980b9','已装柜':'#e67e22','已开船':'#16a085','已到港':'#27ae60','已清关':'#1f7a5c','已完结':'#7f8c8d','取消':'#c0392b'},
+    colorMap: {'询价':'#8e44ad','已下单':'#2980b9','已入库':'#3498db','已审单':'#9b59b6','已装柜':'#e67e22','已开船':'#16a085','已到港':'#27ae60','已清关':'#1f7a5c','已完结':'#7f8c8d','取消':'#c0392b'},
     formatResult: (item, name, icon, color) => {
         const c = color || '#95a5a6';
         return `<span style="color:${c};">${icon} ${name}</span>：${item.orderno || '-'} | ${item.client || '?'} | ${item.pol || '?'}→${item.pod || '?'} | <b style="color:${c};">${item.status || '-'}</b>`;
@@ -7566,7 +7679,9 @@ const CRM_KEY = 'hgcd_crm_fcl_v1';
 
 const CRM_STATUS_COLOR = {
     '询价':   '#8e44ad',
-    '已订舱': '#2980b9',
+    '已下单': '#2980b9',
+    '已入库': '#3498db',
+    '已审单': '#9b59b6',
     '已装柜': '#e67e22',
     '已开船': '#16a085',
     '已到港': '#27ae60',
@@ -7580,6 +7695,389 @@ function crmLoad() {
 }
 function crmSave(data) {
     localStorage.setItem(CRM_KEY, JSON.stringify(data));
+    crmAutoSync();
+}
+
+let autoSyncTimeout = null;
+function crmAutoSync() {
+    const autoSync = localStorage.getItem('crm_auto_sync') === 'true';
+    if (!autoSync) return;
+    
+    if (autoSyncTimeout) {
+        clearTimeout(autoSyncTimeout);
+    }
+    
+    autoSyncTimeout = setTimeout(() => {
+        const apiUrl = localStorage.getItem('cloudflare_api_url') || '';
+        const apiKey = localStorage.getItem('cloudflare_api_key') || '';
+        
+        if (!apiUrl || !apiKey) return;
+        
+        const data = crmLoad();
+        if (!data.length) return;
+        
+        const syncData = data.map(r => ({
+            id: r.id || crypto.randomUUID(),
+            bizType: r.bizType || 'fcl',
+            client: r.client || '',
+            orderno: r.orderno || '',
+            mbl: r.mbl || '',
+            hbl: r.hbl || '',
+            shipMode: r.shipMode || '',
+            pol: r.pol || '',
+            pod: r.pod || '',
+            shipaddr: r.shipaddr || '',
+            recvaddr: r.recvaddr || '',
+            ctype: r.ctype || '',
+            cqty: r.cqty || 1,
+            carrier: r.carrier || '',
+            vessel: r.vessel || '',
+            goods: r.goods || '',
+            weight: r.weight || 0,
+            pkgs: r.pkgs || 0,
+            cbm: r.cbm || 0,
+            billWeight: r.billWeight || 0,
+            unitPrice: r.unitPrice || 0,
+            cutoff: r.cutoff || '',
+            etd: r.etd || '',
+            eta: r.eta || '',
+            ata: r.ata || '',
+            pickup: r.pickup || '',
+            freetime: r.freetime || '',
+            signed: r.signed || '',
+            warehouse: r.warehouse || '',
+            flight: r.flight || '',
+            airSigned: r.airSigned || '',
+            tracking: r.tracking || '',
+            carrierType: r.carrierType || '',
+            status: r.status || '',
+            incoterm: r.incoterm || '',
+            notes: r.notes || '',
+            fees: r.fees || null,
+            costs: r.costs || null,
+            profit: r.profit || 0,
+            margin: r.margin || 0,
+            createdAt: r.createdAt || new Date().toISOString(),
+            updatedAt: r.updatedAt || new Date().toISOString()
+        }));
+        
+        fetch(apiUrl + '/api/orders', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify(syncData)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                console.log('自动同步成功:', result.message);
+            }
+        })
+        .catch(error => {
+            console.error('自动同步失败:', error);
+        });
+    }, 3000);
+}
+
+function showApiConfig() {
+    const modal = document.getElementById('api-config-modal');
+    modal.style.display = 'flex';
+    document.getElementById('config-api-url').value = localStorage.getItem('cloudflare_api_url') || '';
+    document.getElementById('config-api-key').value = localStorage.getItem('cloudflare_api_key') || '';
+    const autoSyncValue = localStorage.getItem('crm_auto_sync');
+    const autoSync = autoSyncValue === null ? true : autoSyncValue === 'true';
+    document.getElementById('config-auto-sync').checked = autoSync;
+    updateAutoSyncSlider();
+    document.getElementById('api-config-status').style.display = 'none';
+    
+    const slider = document.getElementById('auto-sync-slider');
+    slider.onclick = function() {
+        const checkbox = document.getElementById('config-auto-sync');
+        checkbox.checked = !checkbox.checked;
+        updateAutoSyncSlider();
+    };
+}
+
+function updateAutoSyncSlider() {
+    const checkbox = document.getElementById('config-auto-sync');
+    const slider = document.getElementById('auto-sync-slider');
+    const dot = document.getElementById('auto-sync-dot');
+    if (checkbox.checked) {
+        slider.style.backgroundColor = '#9b59b6';
+        dot.style.left = '27px';
+    } else {
+        slider.style.backgroundColor = '#ccc';
+        dot.style.left = '3px';
+    }
+}
+
+function hideApiConfig() {
+    document.getElementById('api-config-modal').style.display = 'none';
+}
+
+function saveApiConfig() {
+    const apiUrl = document.getElementById('config-api-url').value.trim();
+    const apiKey = document.getElementById('config-api-key').value.trim();
+    const autoSync = document.getElementById('config-auto-sync').checked;
+    
+    if (!apiUrl || !apiKey) {
+        const status = document.getElementById('api-config-status');
+        status.style.display = 'block';
+        status.style.color = '#e74c3c';
+        status.textContent = '请填写完整的API配置';
+        return;
+    }
+    
+    localStorage.setItem('cloudflare_api_url', apiUrl);
+    localStorage.setItem('cloudflare_api_key', apiKey);
+    localStorage.setItem('crm_auto_sync', autoSync ? 'true' : 'false');
+    
+    const status = document.getElementById('api-config-status');
+    status.style.display = 'block';
+    status.style.color = '#27ae60';
+    status.textContent = '✅ 配置已保存' + (autoSync ? '（自动同步已启用）' : '');
+    
+    setTimeout(() => {
+        hideApiConfig();
+    }, 1000);
+}
+
+function crmExportTracking() {
+    const apiUrl = localStorage.getItem('cloudflare_api_url') || '';
+    const apiKey = localStorage.getItem('cloudflare_api_key') || '';
+    
+    if (!apiUrl || !apiKey) {
+        showToast('请先配置Cloudflare API');
+        showApiConfig();
+        return;
+    }
+    
+    const allData = {
+        orders: [],
+        clients: [],
+        suppliers: [],
+        airQuotes: [],
+        fclQuotes: [],
+        todos: [],
+        calendarMemos: [],
+        shipmentNotes: null,
+        appState: null
+    };
+    
+    const ordersData = crmLoad();
+    if (ordersData.length) {
+        allData.orders = ordersData.map(r => ({
+            id: r.id || crypto.randomUUID(),
+            bizType: r.bizType || 'fcl',
+            client: r.client || '',
+            orderno: r.orderno || '',
+            mbl: r.mbl || '',
+            hbl: r.hbl || '',
+            shipMode: r.shipMode || '',
+            pol: r.pol || '',
+            pod: r.pod || '',
+            shipaddr: r.shipaddr || '',
+            recvaddr: r.recvaddr || '',
+            ctype: r.ctype || '',
+            cqty: r.cqty || 1,
+            carrier: r.carrier || '',
+            vessel: r.vessel || '',
+            goods: r.goods || '',
+            weight: r.weight || 0,
+            pkgs: r.pkgs || 0,
+            cbm: r.cbm || 0,
+            billWeight: r.billWeight || 0,
+            unitPrice: r.unitPrice || 0,
+            cutoff: r.cutoff || '',
+            etd: r.etd || '',
+            eta: r.eta || '',
+            ata: r.ata || '',
+            pickup: r.pickup || '',
+            freetime: r.freetime || '',
+            signed: r.signed || '',
+            warehouse: r.warehouse || '',
+            flight: r.flight || '',
+            airSigned: r.airSigned || '',
+            tracking: r.tracking || '',
+            carrierType: r.carrierType || '',
+            status: r.status || '',
+            incoterm: r.incoterm || '',
+            notes: r.notes || '',
+            fees: r.fees || null,
+            costs: r.costs || null,
+            profit: r.profit || 0,
+            margin: r.margin || 0,
+            createdAt: r.createdAt || new Date().toISOString(),
+            updatedAt: r.updatedAt || new Date().toISOString()
+        }));
+    }
+    
+    try {
+        const clientsData = localStorage.getItem('logistics_client_data');
+        if (clientsData) allData.clients = JSON.parse(clientsData);
+    } catch(e) {}
+    
+    try {
+        const suppliersData = localStorage.getItem('logistics_supplier_data');
+        if (suppliersData) allData.suppliers = JSON.parse(suppliersData);
+    } catch(e) {}
+    
+    try {
+        const airQuotesData = localStorage.getItem('freight_air_cache_v1');
+        if (airQuotesData) allData.airQuotes = [{ id: '1', data: JSON.parse(airQuotesData) }];
+    } catch(e) {}
+    
+    try {
+        const fclQuotesData = localStorage.getItem('freight_fcl_cache_v1');
+        if (fclQuotesData) allData.fclQuotes = [{ id: '1', data: JSON.parse(fclQuotesData) }];
+    } catch(e) {}
+    
+    try {
+        const todosData = localStorage.getItem('dashboard_todos_v1');
+        if (todosData) allData.todos = JSON.parse(todosData);
+    } catch(e) {}
+    
+    try {
+        const memosData = localStorage.getItem('hcn_calendar_memos');
+        if (memosData) {
+            const memos = JSON.parse(memosData);
+            allData.calendarMemos = Object.entries(memos).map(([date, content]) => ({
+                id: crypto.randomUUID(),
+                date: date,
+                content: content
+            }));
+        }
+    } catch(e) {}
+    
+    try {
+        const shipmentNotes = localStorage.getItem('shipment_notes_v1');
+        if (shipmentNotes) allData.shipmentNotes = shipmentNotes;
+    } catch(e) {}
+    
+    try {
+        const appState = localStorage.getItem('logistics_workbench_state_v1');
+        if (appState) allData.appState = JSON.parse(appState);
+    } catch(e) {}
+    
+    showToast('正在同步全部数据到云端...');
+    
+    fetch(apiUrl + '/api/sync-all', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(allData)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showToast('✅ ' + result.message);
+        } else {
+            showToast('❌ 同步失败：' + (result.error || '未知错误'));
+        }
+    })
+    .catch(error => {
+        showToast('❌ 同步失败：' + error.message);
+    });
+}
+
+function crmRestoreFromCloud() {
+    const apiUrl = localStorage.getItem('cloudflare_api_url') || '';
+    const apiKey = localStorage.getItem('cloudflare_api_key') || '';
+    
+    if (!apiUrl || !apiKey) {
+        showToast('请先配置Cloudflare API');
+        return;
+    }
+    
+    if (!confirm('确定要从云端恢复数据吗？这将覆盖本地数据。')) {
+        return;
+    }
+    
+    showToast('正在从云端恢复数据...');
+    
+    fetch(apiUrl + '/api/backup', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`
+        }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success && result.data) {
+            const data = result.data;
+            let restoreCount = 0;
+            
+            if (data.orders && data.orders.length) {
+                crmSave(data.orders);
+                restoreCount += data.orders.length;
+            }
+            
+            if (data.clients && data.clients.length) {
+                localStorage.setItem('logistics_client_data', JSON.stringify(data.clients));
+                restoreCount += data.clients.length;
+            }
+            
+            if (data.suppliers && data.suppliers.length) {
+                localStorage.setItem('logistics_supplier_data', JSON.stringify(data.suppliers));
+                restoreCount += data.suppliers.length;
+            }
+            
+            if (data.airQuotes && data.airQuotes.length) {
+                const airData = data.airQuotes[0];
+                if (airData && airData.data) {
+                    localStorage.setItem('freight_air_cache_v1', JSON.stringify(airData.data));
+                    restoreCount++;
+                }
+            }
+            
+            if (data.fclQuotes && data.fclQuotes.length) {
+                const fclData = data.fclQuotes[0];
+                if (fclData && fclData.data) {
+                    localStorage.setItem('freight_fcl_cache_v1', JSON.stringify(fclData.data));
+                    restoreCount++;
+                }
+            }
+            
+            if (data.todos && data.todos.length) {
+                localStorage.setItem('dashboard_todos_v1', JSON.stringify(data.todos));
+                restoreCount += data.todos.length;
+            }
+            
+            if (data.calendarMemos && data.calendarMemos.length) {
+                const memos = {};
+                data.calendarMemos.forEach(m => {
+                    memos[m.date] = m.content;
+                });
+                localStorage.setItem('hcn_calendar_memos', JSON.stringify(memos));
+                restoreCount += data.calendarMemos.length;
+            }
+            
+            if (data.shipmentNotes && data.shipmentNotes.length) {
+                localStorage.setItem('shipment_notes_v1', data.shipmentNotes[0].content || '');
+                restoreCount++;
+            }
+            
+            if (data.appState && data.appState.length) {
+                const state = data.appState[0];
+                if (state && state.state) {
+                    localStorage.setItem('logistics_workbench_state_v1', JSON.stringify(state.state));
+                    restoreCount++;
+                }
+            }
+            
+            showToast('✅ 已从云端恢复 ' + restoreCount + ' 条数据！');
+            crmRender();
+        } else {
+            showToast('❌ 恢复失败：' + (result.error || '未知错误'));
+        }
+    })
+    .catch(error => {
+        showToast('❌ 恢复失败：' + error.message);
+    });
 }
 function crmToggleBizType() {
     const bizType = document.getElementById('crm-f-biztype')?.value || 'fcl';
@@ -7602,11 +8100,31 @@ function crmToggleBizType() {
     if (cqtyWrap) cqtyWrap.style.display = isLcl ? 'none' : 'block';
     if (billWeightWrap) billWeightWrap.style.display = 'none';
     if (unitPriceWrap) unitPriceWrap.style.display = 'none';
-    if (shipWrap) shipWrap.style.display = isLcl ? 'block' : 'block';
+    if (shipWrap) shipWrap.style.display = isLcl ? 'block' : 'none';
     if (fclFeeArea) fclFeeArea.style.display = isLcl ? 'none' : 'block';
     if (lclFeeArea) lclFeeArea.style.display = isLcl ? 'block' : 'none';
+    crmToggleShipMode();
     crmUpdateFeeTotal();
 }
+
+function crmToggleShipMode() {
+    const bizType = document.getElementById('crm-f-biztype')?.value || 'fcl';
+    const shipMode = document.getElementById('crm-f-shipmode')?.value || '';
+    const isLcl = bizType === 'lcl';
+    const isAirOrExpress = shipMode === '空运' || shipMode === '快递';
+    
+    const seaDates = document.getElementById('crm-sea-dates');
+    const airDates = document.getElementById('crm-air-dates');
+    
+    if (isLcl && isAirOrExpress) {
+        if (seaDates) seaDates.style.display = 'none';
+        if (airDates) airDates.style.display = 'grid';
+    } else {
+        if (seaDates) seaDates.style.display = 'grid';
+        if (airDates) airDates.style.display = 'none';
+    }
+}
+
 function crmNextId(data) {
     const max = data.reduce((m, r) => Math.max(m, r.id || 0), 0);
     return max + 1;
@@ -7626,9 +8144,11 @@ function crmShowAddModal() {
     // clear form
     ['crm-f-client','crm-f-orderno','crm-f-mbl','crm-f-hbl','crm-f-pol','crm-f-pod','crm-f-shipaddr','crm-f-recvaddr','crm-f-shipmode',
      'crm-f-carrier','crm-f-vessel','crm-f-goods','crm-f-weight','crm-f-pkgs','crm-f-cbm',
-     'crm-f-billweight','crm-f-unitprice','crm-f-cutoff','crm-f-etd','crm-f-eta','crm-f-ata','crm-f-pickup','crm-f-freetime',
-     'crm-f-lcl-billweight','crm-f-lcl-price','crm-f-lcl-extra','crm-f-lcl-tax','crm-f-lcl-cost-price','crm-f-lcl-cost-extra','crm-f-lcl-cost-tax',
-     'crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-other',
+     'crm-f-billweight','crm-f-unitprice','crm-f-cutoff','crm-f-etd','crm-f-eta','crm-f-ata','crm-f-pickup','crm-f-freetime','crm-f-signed',
+     'crm-f-warehouse','crm-f-flight','crm-f-air-signed',
+     'crm-f-lcl-billweight','crm-f-lcl-price','crm-f-lcl-extra','crm-f-lcl-tax','crm-f-lcl-commodity','crm-f-lcl-fumigation','crm-f-lcl-delivery','crm-f-lcl-cost-price','crm-f-lcl-cost-extra','crm-f-lcl-cost-tax','crm-f-lcl-cost-delivery',
+     'crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-inspection','crm-f-fee-commodity','crm-f-fee-fumigation','crm-f-fee-other',
+     'crm-f-tracking','crm-f-carrier-type',
      'crm-f-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
     document.getElementById('crm-f-biztype').value = 'fcl';
     document.getElementById('crm-f-ctype').value = '';
@@ -7650,11 +8170,11 @@ function crmCloseModal() {
 }
 
 function crmBindFeeCalc() {
-    ['crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-other'].forEach(id => {
+    ['crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-inspection','crm-f-fee-commodity','crm-f-fee-fumigation','crm-f-fee-other'].forEach(id => {
         const el = document.getElementById(id);
         if(el) el.oninput = crmUpdateFeeTotal;
     });
-    ['crm-f-lcl-billweight','crm-f-lcl-price','crm-f-lcl-extra','crm-f-lcl-tax','crm-f-lcl-cost-price','crm-f-lcl-cost-extra','crm-f-lcl-cost-tax','crm-f-billweight','crm-f-unitprice'].forEach(id => {
+    ['crm-f-lcl-billweight','crm-f-lcl-price','crm-f-lcl-extra','crm-f-lcl-tax','crm-f-lcl-commodity','crm-f-lcl-fumigation','crm-f-lcl-delivery','crm-f-lcl-cost-price','crm-f-lcl-cost-extra','crm-f-lcl-cost-tax','crm-f-lcl-cost-delivery','crm-f-billweight','crm-f-unitprice'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.oninput = crmUpdateFeeTotal;
     });
@@ -7667,7 +8187,11 @@ function crmUpdateFeeTotal() {
         const billWeight = parseFloat(document.getElementById('crm-f-lcl-billweight')?.value || '0') || 0;
         const price = parseFloat(document.getElementById('crm-f-lcl-price')?.value || '0') || 0;
         const extra = parseFloat(document.getElementById('crm-f-lcl-extra')?.value || '0') || 0;
-        const total = billWeight * price + extra;
+        const tax = parseFloat(document.getElementById('crm-f-lcl-tax')?.value || '0') || 0;
+        const commodity = parseFloat(document.getElementById('crm-f-lcl-commodity')?.value || '0') || 0;
+        const fumigation = parseFloat(document.getElementById('crm-f-lcl-fumigation')?.value || '0') || 0;
+        const delivery = parseFloat(document.getElementById('crm-f-lcl-delivery')?.value || '0') || 0;
+        const total = billWeight * price + extra + tax + commodity + fumigation + delivery;
         const totalEl = document.getElementById('crm-f-lcl-total');
         const mirrorTotalEl = document.getElementById('crm-f-fee-total');
         if (totalEl) totalEl.textContent = '¥ ' + total.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
@@ -7675,7 +8199,7 @@ function crmUpdateFeeTotal() {
         crmUpdateCostTotal();
         return;
     }
-    const ids = ['crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-other'];
+    const ids = ['crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-inspection','crm-f-fee-commodity','crm-f-fee-fumigation','crm-f-fee-other'];
     const simpleReceivable = ids.reduce((s, id) => s + (parseFloat(document.getElementById(id)?.value)||0), 0);
     const fxReceivable = CRM_FEE_FX_ITEMS.reduce((s, item) => s + crmGetFeeFxLine(item.key).cny, 0);
     const revenue = simpleReceivable + fxReceivable;
@@ -7690,6 +8214,9 @@ const CRM_COST_ITEMS = [
     { key: 'customs_export', label: '报关费' },
     { key: 'customs_import', label: '清关费' },
     { key: 'tax',            label: '税金' },
+    { key: 'inspection',     label: '查验费' },
+    { key: 'commodity',      label: '商检费' },
+    { key: 'fumigation',     label: '熏蒸费' },
     { key: 'delivery',       label: '尾程派送费' },
     { key: 'other',          label: '其他成本' },
 ];
@@ -7806,11 +8333,15 @@ function crmUpdateCostTotal() {
         const revenuePrice = parseFloat(document.getElementById('crm-f-lcl-price')?.value || '0') || 0;
         const revenueExtra = parseFloat(document.getElementById('crm-f-lcl-extra')?.value || '0') || 0;
         const revenueTax   = parseFloat(document.getElementById('crm-f-lcl-tax')?.value   || '0') || 0;
-        const revenue = billWeight * revenuePrice + revenueExtra + revenueTax;
+        const revenueCommodity = parseFloat(document.getElementById('crm-f-lcl-commodity')?.value || '0') || 0;
+        const revenueFumigation = parseFloat(document.getElementById('crm-f-lcl-fumigation')?.value || '0') || 0;
+        const revenueDelivery = parseFloat(document.getElementById('crm-f-lcl-delivery')?.value || '0') || 0;
+        const revenue = billWeight * revenuePrice + revenueExtra + revenueTax + revenueCommodity + revenueFumigation + revenueDelivery;
         const costPrice = parseFloat(document.getElementById('crm-f-lcl-cost-price')?.value || '0') || 0;
         const costExtra = parseFloat(document.getElementById('crm-f-lcl-cost-extra')?.value || '0') || 0;
         const costTax   = parseFloat(document.getElementById('crm-f-lcl-cost-tax')?.value   || '0') || 0;
-        const costTotal = billWeight * costPrice + costExtra + costTax;
+        const costDelivery = parseFloat(document.getElementById('crm-f-lcl-cost-delivery')?.value || '0') || 0;
+        const costTotal = billWeight * costPrice + costExtra + costTax + costDelivery;
         const ctEl = document.getElementById('crm-f-lcl-cost-total');
         const mirrorCostEl = document.getElementById('crm-f-cost-total');
         if (ctEl) ctEl.textContent = '¥ ' + costTotal.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
@@ -7846,7 +8377,7 @@ function crmUpdateCostTotal() {
     if (ctEl) ctEl.textContent = '¥ ' + costTotal.toLocaleString('zh-CN',{maximumFractionDigits:0});
 
     // revenue
-    const revIds = ['crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-other'];
+    const revIds = ['crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-inspection','crm-f-fee-commodity','crm-f-fee-fumigation','crm-f-fee-other'];
     const simpleReceivable = revIds.reduce((s, id) => s + (parseFloat(document.getElementById(id)?.value)||0), 0);
     const fxReceivable = CRM_FEE_FX_ITEMS.reduce((s, item) => s + crmGetFeeFxLine(item.key).cny, 0);
     const revenue = simpleReceivable + fxReceivable;
@@ -7877,12 +8408,15 @@ function crmFormToRecord() {
             unitPrice: parseFloat(document.getElementById('crm-f-lcl-price').value || '0') || 0,
             extra: n('crm-f-lcl-extra'),
             tax: n('crm-f-lcl-tax'),
+            commodity: n('crm-f-lcl-commodity'),
+            fumigation: n('crm-f-lcl-fumigation'),
+            delivery: n('crm-f-lcl-delivery'),
             mode: 'lcl_simple'
         }
-        : { ocean: n('crm-f-fee-ocean'), truck: n('crm-f-fee-truck'), customs: n('crm-f-fee-customs'), tax: n('crm-f-fee-tax'), other: n('crm-f-fee-other') };
+        : { ocean: n('crm-f-fee-ocean'), truck: n('crm-f-fee-truck'), customs: n('crm-f-fee-customs'), tax: n('crm-f-fee-tax'), inspection: n('crm-f-fee-inspection'), commodity: n('crm-f-fee-commodity'), fumigation: n('crm-f-fee-fumigation'), other: n('crm-f-fee-other') };
     const feesFx = {};
     if (isLcl) {
-        fees.total = (fees.billWeight || 0) * (fees.unitPrice || 0) + (fees.extra || 0) + (fees.tax || 0);
+        fees.total = (fees.billWeight || 0) * (fees.unitPrice || 0) + (fees.extra || 0) + (fees.tax || 0) + (fees.commodity || 0) + (fees.fumigation || 0) + (fees.delivery || 0);
     } else {
         CRM_FEE_FX_ITEMS.forEach(item => {
             const line = crmGetFeeFxLine(item.key);
@@ -7890,7 +8424,7 @@ function crmFormToRecord() {
             if (line.amt) feesFx[item.key] = line;
         });
         fees.fx = feesFx;
-        fees.total = fees.ocean + fees.truck + fees.customs + fees.tax + fees.other +
+        fees.total = fees.ocean + fees.truck + fees.customs + fees.tax + fees.inspection + fees.commodity + fees.fumigation + fees.other +
             CRM_FEE_FX_ITEMS.reduce((s, item) => s + (fees[item.key] || 0), 0);
     }
     // gather costs
@@ -7901,12 +8435,14 @@ function crmFormToRecord() {
         const unitPrice = n('crm-f-lcl-cost-price');
         const extra = n('crm-f-lcl-cost-extra');
         const tax = n('crm-f-lcl-cost-tax');
-        costTotal = billWeight * unitPrice + extra + tax;
+        const delivery = n('crm-f-lcl-cost-delivery');
+        costTotal = billWeight * unitPrice + extra + tax + delivery;
         costs.mode = 'lcl_simple';
         costs.billWeight = billWeight;
         costs.unitPrice = unitPrice;
         costs.extra = extra;
         costs.tax = tax;
+        costs.delivery = delivery;
     } else {
         CRM_COST_ITEMS.forEach(item => {
             const amt  = parseFloat(document.getElementById('crm-cost-amt-'+item.key)?.value) || 0;
@@ -7946,6 +8482,12 @@ function crmFormToRecord() {
         ata:      g('crm-f-ata'),
         pickup:   g('crm-f-pickup'),
         freetime: g('crm-f-freetime'),
+        signed:   g('crm-f-signed'),
+        warehouse: g('crm-f-warehouse'),
+        flight:   g('crm-f-flight'),
+        airSigned: g('crm-f-air-signed'),
+        tracking: g('crm-f-tracking'),
+        carrierType: g('crm-f-carrier-type'),
         fees,
         costs,
         profit,
@@ -7970,13 +8512,21 @@ function crmRecordToForm(r) {
     s('crm-f-lcl-price', (r.fees||{}).unitPrice || r.unitPrice || '');
     s('crm-f-lcl-extra', (r.fees||{}).extra || '');
     s('crm-f-lcl-tax', (r.fees||{}).tax || '');
+    s('crm-f-lcl-commodity', (r.fees||{}).commodity || '');
+    s('crm-f-lcl-fumigation', (r.fees||{}).fumigation || '');
+    s('crm-f-lcl-delivery', (r.fees||{}).delivery || '');
     s('crm-f-lcl-cost-price', (r.costs||{}).unitPrice || '');
     s('crm-f-lcl-cost-extra', (r.costs||{}).extra || '');
     s('crm-f-lcl-cost-tax', (r.costs||{}).tax || '');
+    s('crm-f-lcl-cost-delivery', (r.costs||{}).delivery || '');
     s('crm-f-cutoff', r.cutoff); s('crm-f-etd', r.etd); s('crm-f-eta', r.eta); s('crm-f-ata', r.ata);
-    s('crm-f-pickup', r.pickup); s('crm-f-freetime', r.freetime);
+    s('crm-f-pickup', r.pickup); s('crm-f-freetime', r.freetime); s('crm-f-signed', r.signed);
+    s('crm-f-warehouse', r.warehouse); s('crm-f-flight', r.flight); s('crm-f-air-signed', r.airSigned);
+    crmToggleShipMode();
     s('crm-f-fee-ocean', (r.fees||{}).ocean || ''); s('crm-f-fee-truck', (r.fees||{}).truck || '');
     s('crm-f-fee-customs', (r.fees||{}).customs || ''); s('crm-f-fee-tax', (r.fees||{}).tax || '');
+    s('crm-f-fee-inspection', (r.fees||{}).inspection || '');
+    s('crm-f-fee-commodity', (r.fees||{}).commodity || ''); s('crm-f-fee-fumigation', (r.fees||{}).fumigation || '');
     s('crm-f-fee-other', (r.fees||{}).other || '');
     const legacyFeesFx = {};
     if ((r.fees||{}).delivery && !((r.fees||{}).fx || {}).delivery) {
@@ -7989,6 +8539,7 @@ function crmRecordToForm(r) {
         legacyFeesFx.arrival_notice = { amt: (r.fees||{}).arrival_notice, cur: 'CNY', rate: 1, cny: (r.fees||{}).arrival_notice };
     }
     crmRenderFeeFxRows({ ...legacyFeesFx, ...((r.fees||{}).fx || {}) });
+    s('crm-f-tracking', r.tracking); s('crm-f-carrier-type', r.carrierType);
     s('crm-f-status', r.status); s('crm-f-incoterm', r.incoterm); s('crm-f-notes', r.notes);
     // render cost rows first, then populate values
     crmRenderCostRows(r.costs || {});
@@ -8068,6 +8619,33 @@ function crmShowDetail(id) {
                 </div>`).join('')}
             </div>
         </div>`;
+    
+    const getTrackingUrl = (carrierType, trackingNo) => {
+        if (!trackingNo || !carrierType) return null;
+        const urls = {
+            'sagawa': `https://k2k.sagawa-exp.co.jp/p/web/okurijosearch.do?okurijoNo=${trackingNo}`,
+            'kuroneko': `https://toi.kuronekoyamato.co.jp/cgi-bin/tneko?dkino=${trackingNo}`,
+            'japanpost': `https://trackings.post.japanpost.jp/services/srv/search/?requestNo1=${trackingNo}`,
+            'fukutsu': `https://www.fukutsu.co.jp/cgi-bin/user/tntsearch.cgi?no=${trackingNo}`,
+            'seino': `https://track.seino.co.jp/cgi-bin/tracking_e.cgi?number=${trackingNo}`,
+            'daiichi': `http://www.daiichikamotsu.co.jp/track/track.php?number=${trackingNo}`,
+        };
+        return urls[carrierType] || null;
+    };
+    
+    const getCarrierName = (carrierType) => {
+        const names = {
+            'sagawa': '佐川急便',
+            'kuroneko': '黑猫宅急便',
+            'japanpost': '日本邮政',
+            'fukutsu': '福山通运',
+            'seino': '西浓运输',
+            'daiichi': '第一货物',
+            'other': '其他'
+        };
+        return names[carrierType] || '—';
+    };
+    
     const fees = r.fees || {};
     const feeFx = fees.fx || {};
     const isLcl = (r.bizType || 'fcl') === 'lcl';
@@ -8080,14 +8658,26 @@ function crmShowDetail(id) {
         }
         return fmtMoney(fallbackVal);
     };
+    
+    const trackingUrl = getTrackingUrl(r.carrierType, r.tracking);
+    const trackingLink = r.tracking 
+        ? (trackingUrl 
+            ? `<a href="${trackingUrl}" target="_blank" style="color:#4a90e2; text-decoration:none; border-bottom:1px dashed #4a90e2;">${r.tracking} 🔗</a>`
+            : r.tracking)
+        : '—';
+    
     document.getElementById('crm-detail-body').innerHTML = `
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
             <div style="font-size:18px; font-weight:bold; color:#2c3e50;">${fmt(r.client)}</div>
             <span style="background:${isLcl?'#16a08522':'#4a90e222'}; color:${isLcl?'#16a085':'#4a90e2'}; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:bold;">${isLcl?'散货':'整柜'}</span>
             <span style="background:${color}22; color:${color}; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:bold;">${r.status}</span>
-            ${r.orderno ? `<span style="background:#f0f4fa; color:#607d8b; padding:4px 10px; border-radius:999px; font-size:11px;">${r.orderno}</span>` : ''}
+            ${r.orderno ? `<span style="background:#f0f4fa; color:#607d8b; padding:4px 10px; border-radius:999px; font-size:11px; display:inline-flex; align-items:center; gap:4px;">${r.orderno}<button onclick="event.stopPropagation(); navigator.clipboard.writeText('${r.orderno}').then(() => alert('订单号已复制：${r.orderno}'));" style="background:none; border:none; cursor:pointer; padding:0; font-size:12px; color:#4a90e2; margin-left:2px;" title="复制订单号">📋</button></span>` : ''}
         </div>
         ${section(isLcl ? '运单 & 单号' : '提单 & 单号', [[isLcl ? '运单号' : '主单号 MBL', fmt(r.mbl)], [isLcl ? '参考单号' : '分单号 HBL', fmt(r.hbl)]])}
+        ${r.tracking ? section('📦 快递信息', [
+            ['快递单号', trackingLink],
+            ['快递公司', getCarrierName(r.carrierType)],
+        ]) : ''}
         ${section('航线 & 船务', [
             ['起运港', fmt(r.pol)], ['目的港', fmt(r.pod)],
             ['发货地址', fmt(r.shipaddr)], ['收货地址', fmt(r.recvaddr)],
@@ -8103,10 +8693,15 @@ function crmShowDetail(id) {
             ['体积', r.cbm ? r.cbm + ' CBM' : '—'],
             ...(isLcl ? [['计费重', r.billWeight ? r.billWeight + ' kg' : '—'], ['报价单价', r.unitPrice ? `¥${Number(r.unitPrice).toLocaleString()}/kg` : '—']] : []),
         ])}
-        ${section('关键日期', [
+        ${section('关键日期', isLcl && (r.shipMode === '空运' || r.shipMode === '快递') ? [
+            ['入仓日期', fmt(r.warehouse)],
+            ['空运航班日期', fmt(r.flight)],
+            ['签收时间', fmt(r.airSigned)],
+        ] : [
             ['截关日', fmt(r.cutoff)], ['开船 ETD', fmt(r.etd)],
             ['预计到港 ETA', fmt(r.eta)], ['实际到港 ATA', fmt(r.ata)],
             ['提柜日', fmt(r.pickup)], ['免柜期截止', fmt(r.freetime)],
+            ['签收时间', fmt(r.signed)],
         ])}
         ${isLcl
             ? section('💰 散货应收', [
@@ -8114,11 +8709,17 @@ function crmShowDetail(id) {
                 ['应收单价', fees.unitPrice ? `¥${Number(fees.unitPrice).toLocaleString()}/kg` : '—'],
                 ['附加费 / 杂费', fmtMoney(fees.extra)],
                 ['税金', fmtMoney(fees.tax)],
+                ['商检费', fmtMoney(fees.commodity)],
+                ['熏蒸费', fmtMoney(fees.fumigation)],
+                ['尾端派送费', fmtMoney(fees.delivery)],
                 ['应收合计', `<b style="color:#2c7be5;">${fmtMoney(fees.total)}</b>`],
             ])
             : section('💰 客户应收', [
                 ['海运费', fmtMoney(fees.ocean)], ['拖车费', fmtMoney(fees.truck)],
                 ['报关费', fmtMoney(fees.customs)], ['税金', fmtMoney(fees.tax)],
+                ['查验费', fmtMoney(fees.inspection)],
+                ['商检费', fmtMoney(fees.commodity)],
+                ['熏蒸费', fmtMoney(fees.fumigation)],
                 ['ARRIVAL NOTICE費用', fmtFeeFx('arrival_notice', fees.arrival_notice)],
                 ['清关费', fmtFeeFx('clearance', fees.clearance)],
                 ['尾程派送费', fmtFeeFx('delivery', fees.delivery)],
@@ -8137,7 +8738,8 @@ function crmShowDetail(id) {
                     `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0e8dc;font-size:12px;"><span style="color:#c0762a;">计费重</span><span style="color:#444;">${costs.billWeight ? costs.billWeight + ' kg' : '—'}</span></div>`,
                     `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0e8dc;font-size:12px;"><span style="color:#c0762a;">应付单价</span><span style="color:#444;">${costs.unitPrice ? `¥${Number(costs.unitPrice).toLocaleString()}/kg` : '—'}</span></div>`,
                     `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0e8dc;font-size:12px;"><span style="color:#c0762a;">应付附加费</span><span style="color:#444;">${fmtMoney(costs.extra)}</span></div>`,
-                    `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0e8dc;font-size:12px;"><span style="color:#c0762a;">税金</span><span style="color:#444;">${fmtMoney(costs.tax)}</span></div>`
+                    `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0e8dc;font-size:12px;"><span style="color:#c0762a;">税金</span><span style="color:#444;">${fmtMoney(costs.tax)}</span></div>`,
+                    `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0e8dc;font-size:12px;"><span style="color:#c0762a;">尾端派送费</span><span style="color:#444;">${fmtMoney(costs.delivery)}</span></div>`
                 ].join('')
                 : CRM_COST_ITEMS.filter(item => costs[item.key]).map(item => {
                 const c = costs[item.key];
@@ -8170,9 +8772,9 @@ function crmShowDetail(id) {
             创建：${r.createdAt ? r.createdAt.slice(0,10) : '—'} &nbsp;|&nbsp; 更新：${r.updatedAt ? r.updatedAt.slice(0,10) : '—'}
         </div>
         <div style="display:flex; gap:10px;">
-            <button class="btn-main" style="background:#4a90e2; flex:1; padding:11px;" onclick="crmEditRecord(${r.id})">✏️ 编辑</button>
-            <button class="btn-main" style="background:#27ae60; flex:1; padding:11px;" onclick="crmShareClientPdf(${r.id})">📤 客户版PDF</button>
-            <button class="btn-main" style="background:#e74c3c; flex:1; padding:11px;" onclick="crmDeleteRecord(${r.id})">🗑 删除</button>
+            <button class="btn-main" style="background:#4a90e2; flex:1; padding:11px;" onclick="crmEditRecord('${r.id}')">✏️ 编辑</button>
+            <button class="btn-main" style="background:#27ae60; flex:1; padding:11px;" onclick="crmShareClientPdf('${r.id}')">📤 客户版PDF</button>
+            <button class="btn-main" style="background:#e74c3c; flex:1; padding:11px;" onclick="crmDeleteRecord('${r.id}')">🗑 删除</button>
         </div>`;
     document.getElementById('crm-detail-modal').style.display = 'block';
 }
@@ -8281,11 +8883,11 @@ function crmRender() {
         const selected = crmSelectedIds.has(r.id);
         const selStyle = selected ? 'background:rgba(74,144,226,0.08); box-shadow:0 0 0 2px #4a90e2 inset, 0 12px 28px rgba(31,58,93,0.08);' : '';
         const cbHtml = crmSelectMode
-            ? `<div style="flex-shrink:0; display:flex; align-items:center; padding-right:4px;" onclick="crmToggleSelect(${r.id}, event)">
-                <input type="checkbox" id="crm-cb-${r.id}" ${selected?'checked':''} onclick="crmToggleSelect(${r.id}, event)" style="width:18px; height:18px; cursor:pointer; accent-color:#4a90e2;">
+            ? `<div style="flex-shrink:0; display:flex; align-items:center; padding-right:4px;" onclick="crmToggleSelect('${r.id}', event)">
+                <input type="checkbox" id="crm-cb-${r.id}" ${selected?'checked':''} onclick="crmToggleSelect('${r.id}', event)" style="width:18px; height:18px; cursor:pointer; accent-color:#4a90e2;">
                </div>`
             : '';
-        const cardClick = crmSelectMode ? `crmToggleSelect(${r.id}, event)` : `crmShowDetail(${r.id})`;
+        const cardClick = crmSelectMode ? `crmToggleSelect('${r.id}', event)` : `crmShowDetail('${r.id}')`;
         return `<div id="crm-card-${r.id}" class="module-card" style="margin-bottom:10px; cursor:pointer; border-left:4px solid ${col}; ${selStyle}" onclick="${cardClick}">
             <div style="display:flex; align-items:flex-start; gap:8px;">
                 ${cbHtml}
@@ -8643,7 +9245,7 @@ function crmClosePdfModal() {
 
 function crmBuildPdfHtml(list, mode, opts = {}) {
     const STATUS_COLOR = {
-        '询价':'#8e44ad','已订舱':'#2980b9','已装柜':'#e67e22','已开船':'#16a085',
+        '询价':'#8e44ad','已下单':'#2980b9','已入库':'#3498db','已审单':'#9b59b6','已装柜':'#e67e22','已开船':'#16a085',
         '已到港':'#27ae60','已清关':'#1f7a5c','已完结':'#7f8c8d','取消':'#c0392b'
     };
     const fmt = v => v || '—';
@@ -8671,6 +9273,9 @@ function crmBuildPdfHtml(list, mode, opts = {}) {
         ['海运费', 'ocean'],
         ['拖车费', 'truck'],
         ['报关费', 'customs'],
+        ['查验费', 'inspection'],
+        ['商检费', 'commodity'],
+        ['熏蒸费', 'fumigation'],
         ['税金', 'tax'],
         ['ARRIVAL NOTICE費用', 'arrival_notice'],
         ['清关费', 'clearance'],
@@ -8702,6 +9307,7 @@ function crmBuildPdfHtml(list, mode, opts = {}) {
             <th style="${thS}text-align:left;min-width:80px;">品名</th>
             <th style="${thS}text-align:center;min-width:68px;">ETD</th>
             <th style="${thS}text-align:center;min-width:68px;">ETA</th>
+            <th style="${thS}text-align:center;min-width:68px;">签收</th>
             <th style="${thS}text-align:left;min-width:170px;">明细金额</th>
             <th style="${thS}text-align:center;min-width:80px;">应收合计</th>
             <th style="${thS}text-align:center;min-width:64px;">状态</th>
@@ -8729,6 +9335,7 @@ function crmBuildPdfHtml(list, mode, opts = {}) {
         const tdS = `padding:7px 6px;border:1px solid #e0e8f0;font-size:11px;`;
         const statusBadge = `<span style="background:${col}22;color:${col};padding:2px 8px;border-radius:999px;font-size:10px;font-weight:bold;white-space:nowrap;">${r.status}</span>`;
         if (isClient) {
+            const signedDate = r.signed || r.airSigned || '';
             return `<tr style="background:${bg};">
                 <td style="${tdS}text-align:center;color:${isLcl?'#16a085':'#4a90e2'};font-weight:bold;">${isLcl?'散货':'整柜'}</td>
                 <td style="${tdS}font-weight:600;color:#2c3e50;">${r.client||'—'}</td>
@@ -8739,6 +9346,7 @@ function crmBuildPdfHtml(list, mode, opts = {}) {
                 <td style="${tdS}color:#555;">${fmt(r.goods)}</td>
                 <td style="${tdS}text-align:center;color:#555;">${fmt(r.etd)}</td>
                 <td style="${tdS}text-align:center;color:#555;">${fmt(r.eta)}</td>
+                <td style="${tdS}text-align:center;color:#555;">${fmt(signedDate)}</td>
                 <td style="${tdS}line-height:1.45;min-width:170px;">${buildFeeDetailHtml(f)}</td>
                 <td style="${tdS}text-align:center;font-weight:bold;color:#2c7be5;">${f.total ? '¥'+Number(f.total).toLocaleString() : '—'}</td>
                 <td style="${tdS}text-align:center;">${statusBadge}</td>
@@ -8768,7 +9376,7 @@ function crmBuildPdfHtml(list, mode, opts = {}) {
 
     const footerRow = isClient
         ? `<tr style="background:#f0f6ff;">
-            <td colspan="10" style="padding:8px 6px;border:1px solid #e0e8f0;font-size:11px;font-weight:bold;color:#2c3e50;text-align:right;">应收合计</td>
+            <td colspan="11" style="padding:8px 6px;border:1px solid #e0e8f0;font-size:11px;font-weight:bold;color:#2c3e50;text-align:right;">应收合计</td>
             <td style="padding:8px 6px;border:1px solid #e0e8f0;font-size:12px;font-weight:bold;color:#2c7be5;text-align:center;">¥${totalRev.toLocaleString()}</td>
             <td style="border:1px solid #e0e8f0;"></td>
           </tr>`
