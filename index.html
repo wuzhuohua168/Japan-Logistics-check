@@ -492,6 +492,7 @@
             <div>
                 <div style="font-size:14px; font-weight:bold; color:var(--text-primary);">自动同步</div>
                 <div style="font-size:12px; color:var(--text-secondary);">保存订单时自动同步到云端</div>
+                <div style="font-size:10px; color:#9b59b6; margin-top:2px;">← 关闭 | 开启 →</div>
             </div>
             <label style="position:relative; display:inline-block; width:50px; height:26px; cursor:pointer;">
                 <input type="checkbox" id="config-auto-sync" style="opacity:0; width:0; height:0; position:absolute;">
@@ -1428,10 +1429,14 @@
                 <div style="font-size:12px; font-weight:bold; color:#4a90e2; margin-bottom:8px; margin-top:4px;">基本信息</div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
                     <div>
-                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">业务类型</label>
-                        <select id="crm-f-biztype" onchange="crmToggleBizType()" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; background:#fff;">
-                            <option value="fcl">整柜</option>
-                            <option value="lcl">散货</option>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">运输方式 *</label>
+                        <select id="crm-f-shipmode" onchange="crmToggleShipMode()" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; background:#fff;">
+                            <option value="">请选择</option>
+                            <option value="海运整柜">海运整柜</option>
+                            <option value="普船拼箱">普船拼箱</option>
+                            <option value="快船拼柜">快船拼柜</option>
+                            <option value="空运">空运</option>
+                            <option value="快递">快递</option>
                         </select>
                     </div>
                     <div>
@@ -1446,21 +1451,16 @@
                         </div>
                     </div>
                     <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">客户单号</label>
+                        <input type="text" id="crm-f-clientorderno" placeholder="客户的订单号" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">主单号 (MBL)</label>
                         <input type="text" id="crm-f-mbl" placeholder="船公司主提单号" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
                     <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">分单号 (HBL)</label>
                         <input type="text" id="crm-f-hbl" placeholder="代理分提单号" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
-                    </div>
-                    <div id="crm-lcl-ship-wrap">
-                        <label id="crm-lcl-ship-label" style="font-size:11px; color:#666; display:block; margin-bottom:4px;">运输方式</label>
-                        <select id="crm-f-shipmode" onchange="crmToggleShipMode()" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; background:#fff;">
-                            <option value="">请选择</option>
-                            <option value="海运散货">海运散货</option>
-                            <option value="空运">空运</option>
-                            <option value="快递">快递</option>
-                        </select>
                     </div>
                 </div>
 
@@ -7859,8 +7859,12 @@ function showApiConfig() {
     const modal = document.getElementById('api-config-modal');
     modal.style.display = 'flex';
     
-    const autoSyncValue = localStorage.getItem('crm_auto_sync');
-    const autoSync = autoSyncValue === null ? true : autoSyncValue === 'true';
+    let autoSyncValue = localStorage.getItem('crm_auto_sync');
+    if (autoSyncValue === null) {
+        localStorage.setItem('crm_auto_sync', 'true');
+        autoSyncValue = 'true';
+    }
+    const autoSync = autoSyncValue === 'true';
     document.getElementById('config-auto-sync').checked = autoSync;
     updateAutoSyncSlider();
     
@@ -8169,6 +8173,8 @@ function crmExportTracking() {
     });
 }
 
+const RESTORE_PASSWORD = '198903';
+
 function crmRestoreFromCloud() {
     const config = getCurrentApiConfig();
     const apiUrl = config.url;
@@ -8176,6 +8182,14 @@ function crmRestoreFromCloud() {
     
     if (!apiUrl || !apiKey) {
         showToast('请先配置Cloudflare API');
+        return;
+    }
+    
+    const inputPassword = prompt('请输入恢复密码：');
+    if (inputPassword === null) return;
+    
+    if (inputPassword !== RESTORE_PASSWORD) {
+        showToast('❌ 密码错误，无法恢复数据');
         return;
     }
     
@@ -8275,44 +8289,42 @@ function crmRestoreFromCloud() {
         showToast('❌ 恢复失败：' + error.message);
     });
 }
-function crmToggleBizType() {
-    const bizType = document.getElementById('crm-f-biztype')?.value || 'fcl';
-    const isLcl = bizType === 'lcl';
+
+function crmToggleShipMode() {
     const modalTitle = document.getElementById('crm-modal-title');
     const editId = document.getElementById('crm-edit-id')?.value;
-    if (modalTitle) modalTitle.textContent = editId ? `编辑${isLcl ? '散货' : '整柜'}` : `新增${isLcl ? '散货' : '整柜'}`;
+    const shipMode = document.getElementById('crm-f-shipmode')?.value || '';
+    const isLcl = shipMode === '普船拼箱' || shipMode === '快船拼柜' || shipMode === '空运' || shipMode === '快递';
+    const isFcl = shipMode === '海运整柜';
+    if (modalTitle) modalTitle.textContent = editId ? `编辑${shipMode || '订单'}` : `新增${shipMode || '订单'}`;
     const routeTitle = document.getElementById('crm-route-title');
     const cargoTitle = document.getElementById('crm-cargo-title');
-    if (routeTitle) routeTitle.textContent = isLcl ? '航线 & 运输' : '航线 & 柜型';
-    if (cargoTitle) cargoTitle.textContent = isLcl ? '货物信息 & 计费' : '货物信息';
+    if (routeTitle) routeTitle.textContent = isFcl ? '航线 & 柜型' : '航线 & 运输';
+    if (cargoTitle) cargoTitle.textContent = isFcl ? '货物信息' : '货物信息 & 计费';
     const ctypeWrap = document.getElementById('crm-ctype-wrap');
     const cqtyWrap = document.getElementById('crm-cqty-wrap');
     const billWeightWrap = document.getElementById('crm-bill-weight-wrap');
     const unitPriceWrap = document.getElementById('crm-unit-price-wrap');
-    const shipWrap = document.getElementById('crm-lcl-ship-wrap');
     const fclFeeArea = document.getElementById('crm-fcl-fee-area');
     const lclFeeArea = document.getElementById('crm-lcl-fee-area');
-    if (ctypeWrap) ctypeWrap.style.display = isLcl ? 'none' : 'block';
-    if (cqtyWrap) cqtyWrap.style.display = isLcl ? 'none' : 'block';
+    if (ctypeWrap) ctypeWrap.style.display = isFcl ? 'block' : 'none';
+    if (cqtyWrap) cqtyWrap.style.display = isFcl ? 'block' : 'none';
     if (billWeightWrap) billWeightWrap.style.display = 'none';
     if (unitPriceWrap) unitPriceWrap.style.display = 'none';
-    if (shipWrap) shipWrap.style.display = isLcl ? 'block' : 'none';
-    if (fclFeeArea) fclFeeArea.style.display = isLcl ? 'none' : 'block';
+    if (fclFeeArea) fclFeeArea.style.display = isFcl ? 'block' : 'none';
     if (lclFeeArea) lclFeeArea.style.display = isLcl ? 'block' : 'none';
-    crmToggleShipMode();
+    crmToggleKeyDates();
     crmUpdateFeeTotal();
 }
 
-function crmToggleShipMode() {
-    const bizType = document.getElementById('crm-f-biztype')?.value || 'fcl';
+function crmToggleKeyDates() {
     const shipMode = document.getElementById('crm-f-shipmode')?.value || '';
-    const isLcl = bizType === 'lcl';
     const isAirOrExpress = shipMode === '空运' || shipMode === '快递';
     
     const seaDates = document.getElementById('crm-sea-dates');
     const airDates = document.getElementById('crm-air-dates');
     
-    if (isLcl && isAirOrExpress) {
+    if (isAirOrExpress) {
         if (seaDates) seaDates.style.display = 'none';
         if (airDates) airDates.style.display = 'grid';
     } else {
@@ -8337,8 +8349,7 @@ function crmGenOrderNo() {
 }
 
 function crmShowAddModal() {
-    // clear form
-    ['crm-f-client','crm-f-orderno','crm-f-mbl','crm-f-hbl','crm-f-pol','crm-f-pod','crm-f-shipaddr','crm-f-recvaddr','crm-f-shipmode',
+    ['crm-f-client','crm-f-orderno','crm-f-clientorderno','crm-f-mbl','crm-f-hbl','crm-f-pol','crm-f-pod','crm-f-shipaddr','crm-f-recvaddr','crm-f-shipmode',
      'crm-f-carrier','crm-f-vessel','crm-f-goods','crm-f-weight','crm-f-pkgs','crm-f-cbm',
      'crm-f-billweight','crm-f-unitprice','crm-f-cutoff','crm-f-etd','crm-f-eta','crm-f-ata','crm-f-pickup','crm-f-freetime','crm-f-signed',
      'crm-f-warehouse','crm-f-flight','crm-f-air-signed',
@@ -8346,7 +8357,7 @@ function crmShowAddModal() {
      'crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-inspection','crm-f-fee-commodity','crm-f-fee-fumigation','crm-f-fee-other',
      'crm-f-tracking','crm-f-carrier-type',
      'crm-f-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
-    document.getElementById('crm-f-biztype').value = 'fcl';
+    document.getElementById('crm-f-shipmode').value = '海运整柜';
     document.getElementById('crm-f-ctype').value = '';
     document.getElementById('crm-f-cqty').value = '1';
     document.getElementById('crm-f-status').value = '询价';
@@ -8356,7 +8367,7 @@ function crmShowAddModal() {
     document.getElementById('crm-modal-title').textContent = '新增整柜';
     crmRenderFeeFxRows({});
     crmRenderCostRows({});
-    crmToggleBizType();
+    crmToggleShipMode();
     document.getElementById('crm-modal').style.display = 'block';
     crmBindFeeCalc();
 }
@@ -8596,8 +8607,9 @@ function crmUpdateCostTotal() {
 function crmFormToRecord() {
     const g = id => (document.getElementById(id)?.value || '').trim();
     const n = id => parseFloat(document.getElementById(id)?.value) || 0;
-    const bizType = g('crm-f-biztype') || 'fcl';
-    const isLcl = bizType === 'lcl';
+    const shipMode = g('crm-f-shipmode') || '';
+    const isFcl = shipMode === '海运整柜';
+    const isLcl = shipMode === '普船拼箱' || shipMode === '快船拼柜' || shipMode === '空运' || shipMode === '快递';
     const fees = isLcl
         ? {
             billWeight: parseFloat(document.getElementById('crm-f-lcl-billweight').value || '0') || 0,
@@ -8623,7 +8635,6 @@ function crmFormToRecord() {
         fees.total = fees.ocean + fees.truck + fees.customs + fees.tax + fees.inspection + fees.commodity + fees.fumigation + fees.other +
             CRM_FEE_FX_ITEMS.reduce((s, item) => s + (fees[item.key] || 0), 0);
     }
-    // gather costs
     const costs = {};
     let costTotal = 0;
     if (isLcl) {
@@ -8651,10 +8662,12 @@ function crmFormToRecord() {
     costs._total = costTotal;
     const profit = fees.total - costTotal;
     const margin = fees.total > 0 ? profit / fees.total : 0;
+    const bizType = isFcl ? 'fcl' : 'lcl';
     return {
         bizType,
         client:   g('crm-f-client'),
         orderno:  g('crm-f-orderno'),
+        clientOrderNo: g('crm-f-clientorderno'),
         mbl:      g('crm-f-mbl'),
         hbl:      g('crm-f-hbl'),
         shipMode: g('crm-f-shipmode'),
@@ -8697,9 +8710,9 @@ function crmFormToRecord() {
 
 function crmRecordToForm(r) {
     const s = (id, v) => { const el = document.getElementById(id); if(el) el.value = v || ''; };
-    s('crm-f-biztype', r.bizType || 'fcl');
-    s('crm-f-client', r.client); s('crm-f-orderno', r.orderno); s('crm-f-mbl', r.mbl); s('crm-f-hbl', r.hbl);
-    s('crm-f-shipmode', r.shipMode);
+    const shipMode = r.shipMode || (r.bizType === 'lcl' ? '普船拼箱' : '海运整柜');
+    s('crm-f-shipmode', shipMode);
+    s('crm-f-client', r.client); s('crm-f-orderno', r.orderno); s('crm-f-clientorderno', r.clientOrderNo); s('crm-f-mbl', r.mbl); s('crm-f-hbl', r.hbl);
     s('crm-f-pol', r.pol); s('crm-f-pod', r.pod); s('crm-f-shipaddr', r.shipaddr); s('crm-f-recvaddr', r.recvaddr); s('crm-f-ctype', r.ctype); s('crm-f-cqty', r.cqty || 1);
     s('crm-f-carrier', r.carrier); s('crm-f-vessel', r.vessel); s('crm-f-goods', r.goods);
     s('crm-f-weight', r.weight || ''); s('crm-f-pkgs', r.pkgs || ''); s('crm-f-cbm', r.cbm || '');
