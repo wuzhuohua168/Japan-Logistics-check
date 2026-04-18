@@ -4922,7 +4922,7 @@ let trendPoints = [];
 const APP_STATE_KEY = 'logistics_workbench_state_v1';
 const APP_DB_NAME = 'logistics_workbench_db';
 const APP_DB_STORE = 'kv';
-const APP_EXTRA_STORAGE_KEYS = ['hcn_calendar_memos','hcn_rates_cache','shipment_notes_v1','dashboard_todos_v1','freight_air_cache_v1','freight_fcl_cache_v1','hgcd_crm_fcl_v1','macro_manual_overrides','macro_consistency_history','macro_ui_state','macro_score_state','macro_alloc_state','macro_cache_last','logistics_client_data','logistics_supplier_data','logistics_reminder_data','logistics_reconciliation_data','logistics_freight_data'];
+const APP_EXTRA_STORAGE_KEYS = ['hcn_calendar_memos','hcn_rates_cache','shipment_notes_v1','dashboard_todos_v1','freight_air_cache_v1','freight_fcl_cache_v1','hgcd_crm_fcl_v1','macro_manual_overrides','macro_consistency_history','macro_ui_state','macro_score_state','macro_alloc_state','macro_cache_last','logistics_client_data','logistics_supplier_data','logistics_reminder_data','logistics_reconciliation_data','logistics_freight_data','cloudflare_api_url','cloudflare_api_key','crm_auto_sync','crm_sync_other'];
 let saveTimer = null;
 let cloudFileHandle = null;
 let lastSavedAt = '';
@@ -7781,15 +7781,22 @@ function crmAutoSync() {
     }, 3000);
 }
 
+const DEFAULT_API_URL = 'https://crm-tracking-api.wubairan.workers.dev';
+const DEFAULT_API_KEY = 'crm2024secretkey123';
+
 function showApiConfig() {
     const modal = document.getElementById('api-config-modal');
     modal.style.display = 'flex';
-    document.getElementById('config-api-url').value = localStorage.getItem('cloudflare_api_url') || '';
-    document.getElementById('config-api-key').value = localStorage.getItem('cloudflare_api_key') || '';
+    document.getElementById('config-api-url').value = localStorage.getItem('cloudflare_api_url') || DEFAULT_API_URL;
+    document.getElementById('config-api-key').value = localStorage.getItem('cloudflare_api_key') || DEFAULT_API_KEY;
     const autoSyncValue = localStorage.getItem('crm_auto_sync');
     const autoSync = autoSyncValue === null ? true : autoSyncValue === 'true';
     document.getElementById('config-auto-sync').checked = autoSync;
     updateAutoSyncSlider();
+    const syncOtherValue = localStorage.getItem('crm_sync_other');
+    const syncOther = syncOtherValue === 'true';
+    document.getElementById('config-sync-other').checked = syncOther;
+    updateSyncOtherSlider();
     document.getElementById('api-config-status').style.display = 'none';
     
     const slider = document.getElementById('auto-sync-slider');
@@ -7798,6 +7805,26 @@ function showApiConfig() {
         checkbox.checked = !checkbox.checked;
         updateAutoSyncSlider();
     };
+    
+    const otherSlider = document.getElementById('sync-other-slider');
+    otherSlider.onclick = function() {
+        const checkbox = document.getElementById('config-sync-other');
+        checkbox.checked = !checkbox.checked;
+        updateSyncOtherSlider();
+    };
+}
+
+function updateSyncOtherSlider() {
+    const checkbox = document.getElementById('config-sync-other');
+    const slider = document.getElementById('sync-other-slider');
+    const dot = document.getElementById('sync-other-dot');
+    if (checkbox.checked) {
+        slider.style.backgroundColor = '#9b59b6';
+        dot.style.left = '27px';
+    } else {
+        slider.style.backgroundColor = '#ccc';
+        dot.style.left = '3px';
+    }
 }
 
 function updateAutoSyncSlider() {
@@ -7821,6 +7848,7 @@ function saveApiConfig() {
     const apiUrl = document.getElementById('config-api-url').value.trim();
     const apiKey = document.getElementById('config-api-key').value.trim();
     const autoSync = document.getElementById('config-auto-sync').checked;
+    const syncOther = document.getElementById('config-sync-other').checked;
     
     if (!apiUrl || !apiKey) {
         const status = document.getElementById('api-config-status');
@@ -7833,6 +7861,7 @@ function saveApiConfig() {
     localStorage.setItem('cloudflare_api_url', apiUrl);
     localStorage.setItem('cloudflare_api_key', apiKey);
     localStorage.setItem('crm_auto_sync', autoSync ? 'true' : 'false');
+    localStorage.setItem('crm_sync_other', syncOther ? 'true' : 'false');
     
     const status = document.getElementById('api-config-status');
     status.style.display = 'block';
@@ -7845,14 +7874,9 @@ function saveApiConfig() {
 }
 
 function crmExportTracking() {
-    const apiUrl = localStorage.getItem('cloudflare_api_url') || '';
-    const apiKey = localStorage.getItem('cloudflare_api_key') || '';
-    
-    if (!apiUrl || !apiKey) {
-        showToast('请先配置Cloudflare API');
-        showApiConfig();
-        return;
-    }
+    const apiUrl = localStorage.getItem('cloudflare_api_url') || DEFAULT_API_URL;
+    const apiKey = localStorage.getItem('cloudflare_api_key') || DEFAULT_API_KEY;
+    const syncOther = localStorage.getItem('crm_sync_other') === 'true';
     
     const allData = {
         orders: [],
@@ -7867,7 +7891,8 @@ function crmExportTracking() {
         apiSettings: {
             url: apiUrl,
             key: apiKey,
-            autoSync: localStorage.getItem('crm_auto_sync') !== 'false'
+            autoSync: localStorage.getItem('crm_auto_sync') !== 'false',
+            syncOther: syncOther
         }
     };
     
@@ -7919,54 +7944,56 @@ function crmExportTracking() {
         }));
     }
     
-    try {
-        const clientsData = localStorage.getItem('logistics_client_data');
-        if (clientsData) allData.clients = JSON.parse(clientsData);
-    } catch(e) {}
+    if (syncOther) {
+        try {
+            const clientsData = localStorage.getItem('logistics_client_data');
+            if (clientsData) allData.clients = JSON.parse(clientsData);
+        } catch(e) {}
+        
+        try {
+            const suppliersData = localStorage.getItem('logistics_supplier_data');
+            if (suppliersData) allData.suppliers = JSON.parse(suppliersData);
+        } catch(e) {}
+        
+        try {
+            const airQuotesData = localStorage.getItem('freight_air_cache_v1');
+            if (airQuotesData) allData.airQuotes = [{ id: '1', data: JSON.parse(airQuotesData) }];
+        } catch(e) {}
+        
+        try {
+            const fclQuotesData = localStorage.getItem('freight_fcl_cache_v1');
+            if (fclQuotesData) allData.fclQuotes = [{ id: '1', data: JSON.parse(fclQuotesData) }];
+        } catch(e) {}
+        
+        try {
+            const todosData = localStorage.getItem('dashboard_todos_v1');
+            if (todosData) allData.todos = JSON.parse(todosData);
+        } catch(e) {}
+        
+        try {
+            const memosData = localStorage.getItem('hcn_calendar_memos');
+            if (memosData) {
+                const memos = JSON.parse(memosData);
+                allData.calendarMemos = Object.entries(memos).map(([date, content]) => ({
+                    id: crypto.randomUUID(),
+                    date: date,
+                    content: content
+                }));
+            }
+        } catch(e) {}
+        
+        try {
+            const shipmentNotes = localStorage.getItem('shipment_notes_v1');
+            if (shipmentNotes) allData.shipmentNotes = shipmentNotes;
+        } catch(e) {}
+        
+        try {
+            const appState = localStorage.getItem('logistics_workbench_state_v1');
+            if (appState) allData.appState = JSON.parse(appState);
+        } catch(e) {}
+    }
     
-    try {
-        const suppliersData = localStorage.getItem('logistics_supplier_data');
-        if (suppliersData) allData.suppliers = JSON.parse(suppliersData);
-    } catch(e) {}
-    
-    try {
-        const airQuotesData = localStorage.getItem('freight_air_cache_v1');
-        if (airQuotesData) allData.airQuotes = [{ id: '1', data: JSON.parse(airQuotesData) }];
-    } catch(e) {}
-    
-    try {
-        const fclQuotesData = localStorage.getItem('freight_fcl_cache_v1');
-        if (fclQuotesData) allData.fclQuotes = [{ id: '1', data: JSON.parse(fclQuotesData) }];
-    } catch(e) {}
-    
-    try {
-        const todosData = localStorage.getItem('dashboard_todos_v1');
-        if (todosData) allData.todos = JSON.parse(todosData);
-    } catch(e) {}
-    
-    try {
-        const memosData = localStorage.getItem('hcn_calendar_memos');
-        if (memosData) {
-            const memos = JSON.parse(memosData);
-            allData.calendarMemos = Object.entries(memos).map(([date, content]) => ({
-                id: crypto.randomUUID(),
-                date: date,
-                content: content
-            }));
-        }
-    } catch(e) {}
-    
-    try {
-        const shipmentNotes = localStorage.getItem('shipment_notes_v1');
-        if (shipmentNotes) allData.shipmentNotes = shipmentNotes;
-    } catch(e) {}
-    
-    try {
-        const appState = localStorage.getItem('logistics_workbench_state_v1');
-        if (appState) allData.appState = JSON.parse(appState);
-    } catch(e) {}
-    
-    showToast('正在同步全部数据到云端...');
+    showToast('正在同步数据到云端...');
     
     fetch(apiUrl + '/api/sync-all', {
         method: 'POST',
