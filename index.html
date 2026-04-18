@@ -8090,6 +8090,7 @@ function crmExportTracking() {
             bizType: r.bizType || 'fcl',
             client: r.client || '',
             orderno: r.orderno || '',
+            clientOrderNo: r.clientOrderNo || '',
             mbl: r.mbl || '',
             hbl: r.hbl || '',
             shipMode: r.shipMode || '',
@@ -8107,16 +8108,23 @@ function crmExportTracking() {
             cbm: r.cbm || 0,
             billWeight: r.billWeight || 0,
             unitPrice: r.unitPrice || 0,
+            bookedDate: r.bookedDate || '',
+            loadedDate: r.loadedDate || '',
             cutoff: r.cutoff || '',
             etd: r.etd || '',
             eta: r.eta || '',
             ata: r.ata || '',
+            clearedDate: r.clearedDate || '',
             pickup: r.pickup || '',
+            deliveryDate: r.deliveryDate || '',
             freetime: r.freetime || '',
             signed: r.signed || '',
             warehouse: r.warehouse || '',
             flight: r.flight || '',
             airSigned: r.airSigned || '',
+            airBookedDate: r.airBookedDate || '',
+            airAta: r.airAta || '',
+            airClearedDate: r.airClearedDate || '',
             tracking: r.tracking || '',
             carrierType: r.carrierType || '',
             status: r.status || '',
@@ -8126,6 +8134,7 @@ function crmExportTracking() {
             costs: r.costs || null,
             profit: r.profit || 0,
             margin: r.margin || 0,
+            statusHistory: r.statusHistory || [],
             createdAt: r.createdAt || new Date().toISOString(),
             updatedAt: r.updatedAt || new Date().toISOString()
         }));
@@ -12283,7 +12292,7 @@ function showSwipeToast(message) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HG Investing Pro</title><script src="https://s3.tradingview.com/tv.js"><\/script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script><style>
+<title>HG Investing Pro</title><script src="https://s3.tradingview.com/tv.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><style>
 *{
     margin:0;
     padding:0;
