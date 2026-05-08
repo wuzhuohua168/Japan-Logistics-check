@@ -795,7 +795,8 @@
         src="https://hg-inves3-0.vercel.app/"
         title="看盘工具"
         style="width:100%; height:100vh; border:none; background:#fff; display:block;"
-        loading="eager">
+        loading="eager"
+        sandbox="allow-scripts allow-same-origin allow-forms">
     </iframe>
     <button class="floating-back-btn" onclick="switchTab(9)">返回工具</button>
 </div>
@@ -1421,7 +1422,8 @@
         src="https://hg-hongguan2.vercel.app/"
         title="宏观系统"
         style="width:100%; height:100vh; border:none; background:#fff; display:block;"
-        loading="eager">
+        loading="eager"
+        sandbox="allow-scripts allow-same-origin allow-forms">
     </iframe>
     <button class="floating-back-btn" onclick="switchTab(9)">返回工具</button>
 </div>
@@ -1444,7 +1446,8 @@
         src="https://iran.immersivetranslate.com/zh-CN/"
         title="新闻浏览"
         style="width:100%; height:100vh; border:none; background:#fff; display:block;"
-        loading="eager">
+        loading="eager"
+        sandbox="allow-scripts allow-same-origin allow-forms">
     </iframe>
     <button class="floating-back-btn" onclick="switchTab(9)">返回工具</button>
 </div>
@@ -5874,6 +5877,40 @@ document.addEventListener('click', function(e) {
 
 <div id="toast" class="toast">操作成功</div>
 
+<script>
+(function() {
+    const originalOpen = window.open;
+    window.open = function() {
+        console.log('Blocked window.open call');
+        return null;
+    };
+    const originalAssign = window.location.assign;
+    window.location.assign = function(url) {
+        if (url && (url.includes('weixin') || url.includes('wechat') || url.includes('mp.weixin'))) {
+            console.log('Blocked navigation to:', url);
+            return;
+        }
+        return originalAssign.call(window.location, url);
+    };
+    let locationHrefDescriptor = Object.getOwnPropertyDescriptor(window.location, 'href');
+    if (!locationHrefDescriptor) {
+        locationHrefDescriptor = Object.getOwnPropertyDescriptor(Location.prototype, 'href');
+    }
+    if (locationHrefDescriptor && locationHrefDescriptor.set) {
+        const originalSet = locationHrefDescriptor.set;
+        Object.defineProperty(window.location, 'href', {
+            set: function(url) {
+                if (url && (url.includes('weixin') || url.includes('wechat') || url.includes('mp.weixin'))) {
+                    console.log('Blocked location.href set to:', url);
+                    return;
+                }
+                return originalSet.call(window.location, url);
+            },
+            get: locationHrefDescriptor.get
+        });
+    }
+})();
+</script>
 <script>
 let currDate = new Date(), rates = {}, memos = JSON.parse(localStorage.getItem('hcn_calendar_memos') || '{}');
 let selectedCountry = 'JP';
@@ -15607,10 +15644,10 @@ input{
     </div>
 </div>
 <div id="translate-panel">
-    <iframe id="translate-frame" src="https://iran.immersivetranslate.com/zh-CN/"></iframe>
+    <iframe id="translate-frame" src="https://iran.immersivetranslate.com/zh-CN/" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
 </div>
 <div id="news-panel">
-    <iframe id="news-frame" src="https://www.jin10.com/"></iframe>
+    <iframe id="news-frame" src="https://www.jin10.com/" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
 </div>
 
 <div id="card-root" aria-hidden="true"></div>
