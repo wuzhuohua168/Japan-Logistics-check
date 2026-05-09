@@ -2696,12 +2696,13 @@
     <div class="module-card">
         <div class="title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
             <span>📦 面单生成</span>
-            <div style="display:flex; gap:8px;">
+            <div style="display:flex; gap:8px; align-items:center;">
                 <select id="label-language" style="padding:8px 12px; border:1px solid #ddd; border-radius:8px; font-size:12px; background:#fff;">
                     <option value="zh">中文</option>
                     <option value="en">English</option>
                     <option value="ja">日本語</option>
                 </select>
+                <button onclick="switchTab(9)" style="padding:8px 16px; background:#e74c3c; color:#fff; border:none; border-radius:8px; font-size:12px; font-weight:bold; cursor:pointer;">返回工具</button>
             </div>
         </div>
         
@@ -5797,6 +5798,20 @@ document.addEventListener('click', function(e) {
         </div>
     </div>
 
+    <div class="row">
+        <label>标签风格</label>
+        <select id="labelStyle">
+            <option value="classic">经典黑白</option>
+            <option value="modern">简约现代</option>
+            <option value="gradient">彩色渐变</option>
+            <option value="logistics">物流专用</option>
+            <option value="minimal">极简风格</option>
+            <option value="business">商务蓝</option>
+            <option value="neon">科技霓虹</option>
+            <option value="card">卡片圆角</option>
+        </select>
+    </div>
+
     <div class="btn-group">
         <button style="background:#4a90e2" onclick="renderPreview()">1. 生成预览</button>
         <button style="background:#28a745" onclick="exportToPDF()">2. 导出 PDF</button>
@@ -5834,6 +5849,7 @@ document.addEventListener('click', function(e) {
         const prefix = document.getElementById('prefix').value;
         const size = document.getElementById('labelSize').value;
         const codeType = document.getElementById('codeType').value;
+        const style = document.getElementById('labelStyle').value;
         finalModeName = document.getElementById('modeSelect').value === 'CUSTOM' ? 
                         document.getElementById('customInput').value : document.getElementById('modeSelect').value;
 
@@ -5847,19 +5863,133 @@ document.addEventListener('click', function(e) {
         for (let i = 1; i <= qty; i++) {
             const wrapper = document.createElement('div');
             wrapper.className = `page-wrapper size-${size}`;
-            wrapper.innerHTML = `
-                <div class="label-content">
-                    <div class="header-mode">${finalModeName || 'LOGISTICS'}</div>
-                    <div class="big-qty">${i} / ${qty}</div>
-                    <div class="big-tracking">${currentMainTracking}</div>
-                    <div class="barcode-area" id="code-area-${i}"></div>
-                    <div class="footer-made">MADE IN CHINA</div>
-                </div>
-            `;
+            
+            let labelHTML = '';
+            const barcodeData = `${currentMainTracking}-${i}`;
+            
+            if (style === 'modern') {
+                labelHTML = `
+                    <div class="label-content" style="border:none; background:linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%); padding:6mm;">
+                        <div style="width:100%; display:flex; justify-content:space-between; align-items:center; padding-bottom:3mm; border-bottom:1px solid #ddd;">
+                            <div style="font-size:14px; font-weight:600; color:#333;">${finalModeName || 'LOGISTICS'}</div>
+                            <div style="font-size:28px; font-weight:300; color:#666;">${i}/${qty}</div>
+                        </div>
+                        <div style="width:100%; text-align:center; padding:4mm 0;">
+                            <div style="font-size:16px; font-weight:600; color:#2c3e50; letter-spacing:1px; font-family:'Courier New',monospace;">${currentMainTracking}</div>
+                        </div>
+                        <div class="barcode-area" id="code-area-${i}" style="flex:1;"></div>
+                        <div style="width:100%; text-align:center; font-size:10px; color:#999; padding-top:2mm;">MADE IN CHINA</div>
+                    </div>
+                `;
+            } else if (style === 'gradient') {
+                labelHTML = `
+                    <div class="label-content" style="border:none;">
+                        <div style="width:100%; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:#fff; text-align:center; padding:3mm 0; font-size:16px; font-weight:bold;">${finalModeName || 'LOGISTICS'}</div>
+                        <div style="width:100%; text-align:center; padding:3mm 0; background:#fafafa;">
+                            <div style="font-size:32px; font-weight:900; color:#333;">${i} / ${qty}</div>
+                        </div>
+                        <div style="width:100%; text-align:center; padding:2mm 0; background:#fff; border-top:2px solid #667eea; border-bottom:2px solid #667eea;">
+                            <div style="font-size:18px; font-weight:bold; font-family:monospace; color:#333;">${currentMainTracking}</div>
+                        </div>
+                        <div class="barcode-area" id="code-area-${i}" style="flex:1; background:#fff;"></div>
+                        <div style="width:100%; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:#fff; text-align:center; padding:2mm 0; font-size:12px; font-weight:bold;">MADE IN CHINA</div>
+                    </div>
+                `;
+            } else if (style === 'logistics') {
+                labelHTML = `
+                    <div class="label-content" style="border:2px solid #333; padding:3mm;">
+                        <div style="width:100%; display:grid; grid-template-columns:1fr 1fr; gap:2mm; padding-bottom:2mm; border-bottom:1px dashed #ccc;">
+                            <div style="font-size:10px; color:#666;">运输方式</div>
+                            <div style="font-size:10px; color:#666; text-align:right;">件数</div>
+                            <div style="font-size:14px; font-weight:bold; color:#333;">${finalModeName || 'LOGISTICS'}</div>
+                            <div style="font-size:14px; font-weight:bold; color:#333; text-align:right;">${i} / ${qty}</div>
+                        </div>
+                        <div style="width:100%; text-align:center; padding:2mm 0; background:#f8f8f8; margin:2mm 0;">
+                            <div style="font-size:8px; color:#999;">TRACKING NO.</div>
+                            <div style="font-size:16px; font-weight:bold; font-family:monospace; color:#000;">${currentMainTracking}</div>
+                        </div>
+                        <div class="barcode-area" id="code-area-${i}" style="flex:1;"></div>
+                        <div style="width:100%; display:flex; justify-content:space-between; padding-top:2mm; border-top:1px dashed #ccc; font-size:9px; color:#666;">
+                            <span>© HG Logistics</span>
+                            <span>MADE IN CHINA</span>
+                        </div>
+                    </div>
+                `;
+            } else if (style === 'minimal') {
+                labelHTML = `
+                    <div class="label-content" style="border:none; padding:8mm; background:#fff;">
+                        <div style="width:100%; text-align:center; padding-bottom:4mm;">
+                            <div style="font-size:22px; font-weight:300; color:#000; letter-spacing:2px; font-family:'Courier New',monospace;">${currentMainTracking}</div>
+                        </div>
+                        <div class="barcode-area" id="code-area-${i}" style="flex:1;"></div>
+                        <div style="width:100%; text-align:center; font-size:9px; color:#bbb; padding-top:3mm;">${i}/${qty}</div>
+                    </div>
+                `;
+            } else if (style === 'business') {
+                labelHTML = `
+                    <div class="label-content" style="border:none;">
+                        <div style="width:100%; background:#1a365d; color:#fff; padding:4mm 3mm;">
+                            <div style="font-size:14px; font-weight:bold; letter-spacing:1px;">${finalModeName || 'LOGISTICS'}</div>
+                            <div style="font-size:10px; opacity:0.8; margin-top:1mm;">PROFESSIONAL SHIPPING</div>
+                        </div>
+                        <div style="width:100%; background:#e8f4f8; padding:3mm; text-align:center;">
+                            <div style="font-size:24px; font-weight:bold; color:#1a365d;">${i} / ${qty}</div>
+                        </div>
+                        <div style="width:100%; text-align:center; padding:3mm; background:#fff;">
+                            <div style="font-size:16px; font-weight:600; font-family:monospace; color:#333;">${currentMainTracking}</div>
+                        </div>
+                        <div class="barcode-area" id="code-area-${i}" style="flex:1; background:#fff;"></div>
+                        <div style="width:100%; background:#1a365d; color:#fff; text-align:center; padding:2mm; font-size:10px;">MADE IN CHINA</div>
+                    </div>
+                `;
+            } else if (style === 'neon') {
+                labelHTML = `
+                    <div class="label-content" style="border:none; background:#0a0a0a;">
+                        <div style="width:100%; text-align:center; padding:3mm 0; border-bottom:1px solid #00ff88;">
+                            <div style="font-size:14px; font-weight:bold; color:#00ff88; text-shadow:0 0 10px #00ff88;">${finalModeName || 'LOGISTICS'}</div>
+                        </div>
+                        <div style="width:100%; text-align:center; padding:3mm 0;">
+                            <div style="font-size:28px; font-weight:bold; color:#ff00ff; text-shadow:0 0 15px #ff00ff;">${i} / ${qty}</div>
+                        </div>
+                        <div style="width:100%; text-align:center; padding:2mm 0; border-top:1px solid #00ff88; border-bottom:1px solid #00ff88;">
+                            <div style="font-size:16px; font-weight:bold; font-family:monospace; color:#00ffff; text-shadow:0 0 10px #00ffff;">${currentMainTracking}</div>
+                        </div>
+                        <div class="barcode-area" id="code-area-${i}" style="flex:1; background:#0a0a0a;"></div>
+                        <div style="width:100%; text-align:center; font-size:10px; color:#00ff88; padding-top:2mm; text-shadow:0 0 5px #00ff88;">MADE IN CHINA</div>
+                    </div>
+                `;
+            } else if (style === 'card') {
+                labelHTML = `
+                    <div class="label-content" style="border:none; background:#f5f5f5; padding:4mm;">
+                        <div style="width:100%; background:#fff; border-radius:8mm; padding:4mm; box-shadow:0 2mm 4mm rgba(0,0,0,0.1);">
+                            <div style="width:100%; display:flex; justify-content:space-between; align-items:center; padding-bottom:2mm; border-bottom:1px solid #eee;">
+                                <div style="font-size:12px; font-weight:600; color:#333;">${finalModeName || 'LOGISTICS'}</div>
+                                <div style="background:#4a90e2; color:#fff; padding:1mm 3mm; border-radius:4mm; font-size:11px; font-weight:bold;">${i}/${qty}</div>
+                            </div>
+                            <div style="width:100%; text-align:center; padding:3mm 0;">
+                                <div style="font-size:15px; font-weight:600; color:#333; font-family:monospace;">${currentMainTracking}</div>
+                            </div>
+                            <div class="barcode-area" id="code-area-${i}" style="flex:1;"></div>
+                            <div style="width:100%; text-align:center; font-size:9px; color:#999; padding-top:2mm;">MADE IN CHINA</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                labelHTML = `
+                    <div class="label-content">
+                        <div class="header-mode">${finalModeName || 'LOGISTICS'}</div>
+                        <div class="big-qty">${i} / ${qty}</div>
+                        <div class="big-tracking">${currentMainTracking}</div>
+                        <div class="barcode-area" id="code-area-${i}"></div>
+                        <div class="footer-made">MADE IN CHINA</div>
+                    </div>
+                `;
+            }
+            
+            wrapper.innerHTML = labelHTML;
             container.appendChild(wrapper);
 
             const codeArea = document.getElementById(`code-area-${i}`);
-            const barcodeData = `${currentMainTracking}-${i}`;
 
             if (codeType === 'barcode') {
                 const canvas = document.createElement('canvas');
