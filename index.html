@@ -4296,8 +4296,8 @@ document.addEventListener('click', function(e) {
             packages: pick(/^\s*(?:件数|箱数)[:：]?\s*(\d+)/m),
             container: pick(/^\s*柜型[:：]?\s*([^\s，,]+)/m),
             cargoSize: pick(/^\s*额定装载（方）[:：]?\s*([^\s，,]+)/m),
-            transportFee: pick(/^\s*运输费用[:：]?\s*([0-9]+(?:\.\d+)?)/m),
-            amount: pick(/^\s*金额[:：]?\s*([0-9]+(?:\.\d+)?)/m),
+            transportFee: pick(/^\s*运输费用[:：]?\s*(-?[0-9]+(?:\.\d+)?)/m),
+            amount: pick(/^\s*金额[:：]?\s*(-?[0-9]+(?:\.\d+)?)/m),
             remark: pick(/^\s*备注[:：]?\s*([^\n]+)/m)
         };
 
@@ -4307,7 +4307,7 @@ document.addEventListener('click', function(e) {
             "柜型", "额定装载（方）", "备注"
         ]);
         const detailMatches = [];
-        const re = /([A-Za-z\u4e00-\u9fa5+]+)\s*[:：]?\s*(\d+(?:\.\d+)?)/g;
+        const re = /([A-Za-z\u4e00-\u9fa5+]+)\s*[:：]?\s*(-?\d+(?:\.\d+)?)/g;
         let m;
         while ((m = re.exec(text)) !== null) {
             const name = m[1].trim();
@@ -5822,8 +5822,9 @@ document.addEventListener('click', function(e) {
     <div class="btn-group">
         <button style="background:#4a90e2" onclick="renderPreview()">1. 生成预览</button>
         <button style="background:#28a745" onclick="exportToPDF()">2. 导出 PDF</button>
-        <button style="background:#9b59b6" onclick="copyLabelInfo()">3. 复制信息</button>
-        <button style="background:#e67e22" onclick="copySimpleInfo()">4. 复制简易</button>
+        <button style="background:#e67e22" onclick="sharePreviewAsImage()">3. 分享图片</button>
+        <button style="background:#9b59b6" onclick="copyLabelInfo()">4. 复制信息</button>
+        <button style="background:#95a5a6" onclick="copySimpleInfo()">5. 复制简易</button>
     </div>
 
     <div class="info-tip">
@@ -6183,12 +6184,62 @@ document.addEventListener('click', function(e) {
 
             // 修改点：导出文件名格式：运输方式_单号_件数
             const fileName = `${finalModeName || '标签'}_${currentMainTracking}_${pages.length}件.pdf`;
-            pdf.save(fileName);
+            const blob = pdf.output('blob');
+            const file = new File([blob], fileName, { type: 'application/pdf' });
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({ files: [file], title: fileName });
+                    return;
+                } catch (err) {
+                    if (err && err.name === 'AbortError') return;
+                }
+            }
+            downloadBlob(blob, fileName);
         } catch (e) {
             alert("导出异常：" + e.message);
         } finally {
             overlay.style.display = 'none';
         }
+    }
+
+    async function sharePreviewAsImage() {
+        const pages = document.querySelectorAll('.page-wrapper');
+        if (pages.length === 0) return alert("请先生成预览！");
+        try {
+            const firstPage = pages[0];
+            const canvas = await html2canvas(firstPage, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false
+            });
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            if (!blob) throw new Error('图片生成失败');
+            const fileName = `${finalModeName || '标签'}_${currentMainTracking || 'preview'}.png`;
+            const file = new File([blob], fileName, { type: 'image/png' });
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({ files: [file], title: fileName });
+                    return;
+                } catch (err) {
+                    if (err && err.name === 'AbortError') return;
+                }
+            }
+            downloadBlob(blob, fileName);
+        } catch (e) {
+            alert("分享图片失败：" + e.message);
+        }
+    }
+
+    function downloadBlob(blob, fileName) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
     function copyLabelInfo() {
