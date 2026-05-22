@@ -142,6 +142,8 @@
         .holiday-intl { color: #e67e22; font-weight: 500; }
         .cal-cell-holiday-jp { background: #fff4f4; }
         .cal-cell-holiday-intl { background: #fff9f1; }
+        .cal-cell-reminder { background: rgba(230, 126, 34, 0.1); }
+        .crm-reminder-dot { font-size: 10px; cursor: pointer; margin-top: 2px; }
         .market-text { font-size: 9px; margin-top: 1px; line-height: 1.2; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
         .market-a { color: #1f6fb2; }
         .market-us { color: #8e44ad; }
@@ -1068,7 +1070,7 @@
                 </div>
                 <div class="stat-sub" id="dashboard-rates-info" data-i18n="ratesLoading">汇率加载中...</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" style="cursor:pointer;" onclick="switchTab(18)">
                 <div class="stat-label" data-i18n="monthlyReminder">本月提醒</div>
                 <div class="stat-value" id="dashboard-holiday-title" data-i18n="holidayMarket">节假/休市</div>
                 <div class="stat-sub" id="dashboard-holiday-info" data-i18n="organizingReminders">正在整理本月提醒...</div>
@@ -2905,6 +2907,28 @@
         .fee-body { padding: 15px; flex: 1; font-size: 16px; }
 
         .report-footer { text-align: center; margin-top: 50px; border-top: 1px solid #eee; padding-top: 15px; }
+        .payment-notice {
+            text-align: left;
+            margin-bottom: 14px;
+            padding: 12px 14px;
+            border: 1px solid #eee;
+            background: #f9f9f9;
+            border-radius: 10px;
+            line-height: 1.7;
+        }
+        .payment-notice.payment-notice-target {
+            display: none;
+        }
+        .payment-notice-title {
+            font-size: 11px;
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        .payment-notice-line {
+            font-size: 10px;
+            color: #666;
+        }
         .footer-line-1 { font-size: 10px; color: #999; letter-spacing: 0.5px; margin-bottom: 4px; }
         .footer-line-2 { font-size: 9px; color: #bbb; }
 
@@ -2982,6 +3006,7 @@
             <button class="btn-preview" onclick="doUpdate()">① 更新预览内容</button>
             <button class="btn-pdf" onclick="processFile('pdf')">② 分享/下载 PDF</button>
             <button class="btn-csv" onclick="processFile('csv')">③ 分享/下载 CSV</button>
+            <button class="btn-preview payment-notice-toggle" onclick="togglePaymentNotice()" style="background:#16a085;color:#fff;border:none;">④ 付款账户信息</button>
             <button class="btn-preview btn-clear" onclick="clearCache('air')">清除缓存</button>
             <button class="btn-preview" onclick="addAirRow()">新增序号行</button>
         </div>
@@ -3046,6 +3071,7 @@
             </div>
         </div>
         <div class="report-footer">
+            <div class="payment-notice payment-notice-target" id="paymentNoticeAir"></div>
             <div class="footer-line-1">此运单由系统自动生成，如有疑问请联系客服或者业务。</div>
             <div class="footer-line-2">生成时间：<span id="outGenAt">-</span></div>
         </div>
@@ -3096,6 +3122,7 @@
         <button class="btn-preview" onclick="doUpdateFcl({ preserveDetailRows: true })">① 更新整柜预览</button>
         <button class="btn-pdf" onclick="processFileFcl('pdf')">② 分享/下载 PDF</button>
         <button class="btn-csv" onclick="processFileFcl('csv')">③ 分享/下载 CSV</button>
+        <button class="btn-preview payment-notice-toggle" onclick="togglePaymentNotice()" style="background:#16a085;color:#fff;border:none;">④ 付款账户信息</button>
         <button class="btn-preview btn-clear" onclick="clearCache('fcl')">清除缓存</button>
         <button class="btn-preview" onclick="addFclRow()">新增序号行</button>
         <button class="btn-preview" onclick="addFclDetailRow()">新增明细行</button>
@@ -3208,6 +3235,7 @@
             </table>
         </div>
         <div class="report-footer">
+            <div class="payment-notice payment-notice-target" id="paymentNoticeFcl"></div>
             <div class="footer-line-1">此费用确认单由系统自动生成，如有疑问请联系客服或者业务。</div>
             <div class="footer-line-2">生成时间：<span id="outGenAtFcl">-</span></div>
         </div>
@@ -3629,7 +3657,15 @@ document.addEventListener('click', function(e) {
 
     const AIR_CACHE_KEY = "freight_air_cache_v1";
     const FCL_CACHE_KEY = "freight_fcl_cache_v1";
+    const PAYMENT_NOTICE_KEY = "freight_payment_notice_enabled_v1";
     const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent);
+    const PAYMENT_NOTICE_LINES = [
+        '尊敬的客户；请收到账单如有疑问，请在收到账单日起3日内提出，否则当是默认,请尽快核对账单，谢谢！请将运费支付到以下银行账号',
+        '账户名称：深圳市恒基承达商务有限公司',
+        '账户号码：744580888548',
+        '开户银行：中国银行股份有限公司深圳北方大厦支行'
+    ];
+    let paymentNoticeEnabled = localStorage.getItem(PAYMENT_NOTICE_KEY) === '1';
 
     async function exportPdfFromElement(element, fileName, orientation = 'p') {
         if (!element) { alert("未找到预览区域"); return; }
@@ -3794,6 +3830,70 @@ document.addEventListener('click', function(e) {
         }
     }
 
+    function getPaymentNoticeHtml() {
+        return [
+            `<div class="payment-notice-title">${PAYMENT_NOTICE_LINES[0]}</div>`,
+            `<div class="payment-notice-line">${PAYMENT_NOTICE_LINES[1]}</div>`,
+            `<div class="payment-notice-line">${PAYMENT_NOTICE_LINES[2]}</div>`,
+            `<div class="payment-notice-line">${PAYMENT_NOTICE_LINES[3]}</div>`
+        ].join("");
+    }
+
+    function renderPaymentNotice() {
+        const html = getPaymentNoticeHtml();
+        document.querySelectorAll('.payment-notice-target').forEach((el) => {
+            el.innerHTML = html;
+            el.style.display = paymentNoticeEnabled ? 'block' : 'none';
+        });
+        document.querySelectorAll('.payment-notice-toggle').forEach((btn) => {
+            btn.textContent = paymentNoticeEnabled ? '④ 隐藏付款账户信息' : '④ 付款账户信息';
+        });
+    }
+
+    function togglePaymentNotice() {
+        paymentNoticeEnabled = !paymentNoticeEnabled;
+        localStorage.setItem(PAYMENT_NOTICE_KEY, paymentNoticeEnabled ? '1' : '0');
+        renderPaymentNotice();
+        const activeTab = document.querySelector('.tab-content.active');
+        if (activeTab && activeTab.id === 'tab-fcl' && typeof doUpdateFcl === 'function') {
+            doUpdateFcl({ preserveDetailRows: true, resetDetailSum: false });
+        } else if (typeof doUpdate === 'function') {
+            doUpdate();
+        }
+    }
+
+    function getPaymentNoticeHtml() {
+        return [
+            `<div class="payment-notice-title">${PAYMENT_NOTICE_LINES[0]}</div>`,
+            `<div class="payment-notice-line">${PAYMENT_NOTICE_LINES[1]}</div>`,
+            `<div class="payment-notice-line">${PAYMENT_NOTICE_LINES[2]}</div>`,
+            `<div class="payment-notice-line">${PAYMENT_NOTICE_LINES[3]}</div>`
+        ].join("");
+    }
+
+    function renderPaymentNotice() {
+        const html = getPaymentNoticeHtml();
+        document.querySelectorAll('.payment-notice-target').forEach((el) => {
+            el.innerHTML = html;
+            el.style.display = paymentNoticeEnabled ? 'block' : 'none';
+        });
+        document.querySelectorAll('.payment-notice-toggle').forEach((btn) => {
+            btn.textContent = paymentNoticeEnabled ? '④ 隐藏付款账户信息' : '④ 付款账户信息';
+        });
+    }
+
+    function togglePaymentNotice() {
+        paymentNoticeEnabled = !paymentNoticeEnabled;
+        localStorage.setItem(PAYMENT_NOTICE_KEY, paymentNoticeEnabled ? '1' : '0');
+        renderPaymentNotice();
+        const activeTab = document.querySelector('.tab-content.active');
+        if (activeTab && activeTab.id === 'tab-fcl' && typeof doUpdateFcl === 'function') {
+            doUpdateFcl({ preserveDetailRows: true, resetDetailSum: false });
+        } else if (typeof doUpdate === 'function') {
+            doUpdate();
+        }
+    }
+
     function switchTab(type) {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.tab-item').forEach(i => i.classList.remove('active'));
@@ -3842,6 +3942,7 @@ document.addEventListener('click', function(e) {
         }
     };
     loadCache();
+    renderPaymentNotice();
     if (document.getElementById('airHeaderPreset') && !localStorage.getItem(AIR_CACHE_KEY)) applyHeaderPreset('air', 'hg', true);
     if (document.getElementById('fclHeaderPreset') && !localStorage.getItem(FCL_CACHE_KEY)) applyHeaderPreset('fcl', 'hg', true);
 
@@ -4548,6 +4649,28 @@ document.addEventListener('click', function(e) {
         .fee-body { padding: 15px; flex: 1; font-size: 16px; }
 
         .report-footer { text-align: center; margin-top: 50px; border-top: 1px solid #eee; padding-top: 15px; }
+        .payment-notice {
+            text-align: left;
+            margin-bottom: 14px;
+            padding: 12px 14px;
+            border: 1px solid #eee;
+            background: #f9f9f9;
+            border-radius: 10px;
+            line-height: 1.7;
+        }
+        .payment-notice.payment-notice-target {
+            display: none;
+        }
+        .payment-notice-title {
+            font-size: 11px;
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        .payment-notice-line {
+            font-size: 10px;
+            color: #666;
+        }
         .footer-line-1 { font-size: 10px; color: #999; letter-spacing: 0.5px; margin-bottom: 4px; }
         .footer-line-2 { font-size: 9px; color: #bbb; }
 
@@ -4627,6 +4750,7 @@ document.addEventListener('click', function(e) {
             <button class="btn-preview" onclick="doUpdate()">① 更新预览内容</button>
             <button class="btn-pdf" onclick="processFile('pdf')">② 分享/下载 PDF</button>
             <button class="btn-csv" onclick="processFile('csv')">③ 分享/下载 CSV</button>
+            <button class="btn-preview payment-notice-toggle" onclick="togglePaymentNotice()" style="background:#16a085;color:#fff;border:none;">④ 付款账户信息</button>
             <button class="btn-preview btn-clear" onclick="clearCache('air')">清除缓存</button>
             <button class="btn-preview" onclick="addAirRow()">新增序号行</button>
         </div>
@@ -4691,6 +4815,7 @@ document.addEventListener('click', function(e) {
             </div>
         </div>
         <div class="report-footer">
+            <div class="payment-notice payment-notice-target" id="paymentNoticeAir"></div>
             <div class="footer-line-1">此运单由系统自动生成，如有疑问请联系客服或者业务。</div>
             <div class="footer-line-2">生成时间：<span id="outGenAt">-</span></div>
         </div>
@@ -4743,6 +4868,7 @@ document.addEventListener('click', function(e) {
         <button class="btn-preview" onclick="doUpdateFcl({ preserveDetailRows: true })">① 更新整柜预览</button>
         <button class="btn-pdf" onclick="processFileFcl('pdf')">② 分享/下载 PDF</button>
         <button class="btn-csv" onclick="processFileFcl('csv')">③ 分享/下载 CSV</button>
+        <button class="btn-preview payment-notice-toggle" onclick="togglePaymentNotice()" style="background:#16a085;color:#fff;border:none;">④ 付款账户信息</button>
         <button class="btn-preview btn-clear" onclick="clearCache('fcl')">清除缓存</button>
         <button class="btn-preview" onclick="addFclRow()">新增序号行</button>
         <button class="btn-preview" onclick="addFclDetailRow()">新增明细行</button>
@@ -4855,6 +4981,7 @@ document.addEventListener('click', function(e) {
             </table>
         </div>
         <div class="report-footer">
+            <div class="payment-notice payment-notice-target" id="paymentNoticeFcl"></div>
             <div class="footer-line-1">此费用确认单由系统自动生成，如有疑问请联系客服或者业务。</div>
             <div class="footer-line-2">生成时间：<span id="outGenAtFcl">-</span></div>
         </div>
@@ -4874,7 +5001,15 @@ document.addEventListener('click', function(e) {
 
     const AIR_CACHE_KEY = "freight_air_cache_v1";
     const FCL_CACHE_KEY = "freight_fcl_cache_v1";
+    const PAYMENT_NOTICE_KEY = "freight_payment_notice_enabled_v1";
     const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent);
+    const PAYMENT_NOTICE_LINES = [
+        '尊敬的客户；请收到账单如有疑问，请在收到账单日起3日内提出，否则当是默认,请尽快核对账单，谢谢！请将运费支付到以下银行账号',
+        '账户名称：深圳市恒基承达商务有限公司',
+        '账户号码：744580888548',
+        '开户银行：中国银行股份有限公司深圳北方大厦支行'
+    ];
+    let paymentNoticeEnabled = localStorage.getItem(PAYMENT_NOTICE_KEY) === '1';
 
     async function exportPdfFromElement(element, fileName, orientation = 'p') {
         if (!element) { alert("未找到预览区域"); return; }
@@ -5085,6 +5220,7 @@ document.addEventListener('click', function(e) {
         }
     };
     loadCache();
+    renderPaymentNotice();
 
     function generateOrderNo() {
         const timestamp = Date.now().toString().slice(-8);
@@ -7709,6 +7845,10 @@ function initCalendar() {
     document.getElementById('cal-month-title').innerText = `${year}年 ${month + 1}月`;
     ['日','一','二','三','四','五','六'].forEach(l => grid.innerHTML += `<div class="cal-cell" style="font-weight:bold;height:35px;background:#f8f9fa;">${l}</div>`);
     const first = new Date(year, month, 1).getDay(), days = new Date(year, month + 1, 0).getDate();
+    
+    reminderLoadData();
+    if (!reminderData.length) reminderGenerateFromCRM();
+    
     for(let i=0; i<first; i++) grid.innerHTML += `<div class="cal-cell"></div>`;
     for(let d=1; d<=days; d++) {
         const key = `${year}-${month+1}-${d}`,
@@ -7716,20 +7856,32 @@ function initCalendar() {
         const lunarDate = Lunar.fromDate(new Date(year, month, d));
         const holiday = getHolidayInfo(year, month + 1, d);
         const marketClosures = getMarketClosures(year, month + 1, d);
+        
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const dayReminders = reminderData.filter(r => r.date === dateStr);
+        const hasReminders = dayReminders.length > 0;
+        
         const cell = document.createElement('div'); cell.className = 'cal-cell';
         if (holiday?.type === 'jp') cell.classList.add('cal-cell-holiday-jp');
         if (holiday?.type === 'intl') cell.classList.add('cal-cell-holiday-intl');
+        if (hasReminders) cell.classList.add('cal-cell-reminder');
         cell.innerHTML = `
             ${isToday?'<div class="today-circle">'+d+'</div>':d}
             <div class="lunar-text">${lunarDate.getJieQi() || lunarDate.getDayInChinese()}</div>
             ${holiday ? `<div class="holiday-text ${holiday.type === 'jp' ? 'holiday-jp' : 'holiday-intl'}" title="${holiday.name}">${holiday.name}</div>` : ''}
             ${marketClosures.map(item => `<div class="market-text ${item.className}" title="${item.tip}">${item.label}</div>`).join('')}
             ${memos[key]?'<div class="event-dot"></div>':''}
+            ${hasReminders ? `<div class="crm-reminder-dot" title="${dayReminders.map(r => r.title).join('\n')}">🔔</div>` : ''}
         `;
-        cell.onclick = () => {
+        cell.onclick = (e) => {
+            if (hasReminders && e.target.classList.contains('crm-reminder-dot')) {
+                switchTab(18);
+                return;
+            }
             const tags = [];
             if (holiday) tags.push(holiday.name);
             marketClosures.forEach(item => tags.push(item.tip));
+            if (hasReminders) tags.push(...dayReminders.map(r => r.title));
             const promptTitle = tags.length ? `备注（${tags.join(' / ')}）:` : '备注:';
             const n = prompt(promptTitle, memos[key]||"");
             if(n!==null) {
@@ -13789,38 +13941,48 @@ function reconciliationGenerateFromCRM(){
     const receivableMap = {};
     const payableMap = {};
     const crmData = crmLoad();
+    
+    function getSettlementPaidAmount(total, status) {
+        if (!total) return 0;
+        if (status === '已结算' || status === '已收款' || status === '已付款' || status === 'paid') return total;
+        if (status === '部分结算' || status === '部分收款' || status === '部分付款' || status === 'partial') return total / 2;
+        return 0;
+    }
+    
     crmData.forEach(r => {
         // ── 应收：按客户名汇总 ──
         const clientName = r.client;
         const receivableAmt = (r.fees||{}).total || 0;
         if(clientName && receivableAmt > 0){
             if(!receivableMap[clientName]) receivableMap[clientName] = { customer: clientName, orders: [], totalAmount: 0, paidAmount: 0 };
-            const isPaid = r.paymentStatus === 'paid';
+            const settlementStatus = r.settlementStatus || r.paymentStatus || '未结算';
+            const paidAmount = getSettlementPaidAmount(receivableAmt, settlementStatus);
             receivableMap[clientName].orders.push({
                 orderId: r.id,
                 orderno: r.orderno || r.id,
                 date: r.etd || r.createdAt,
                 amount: receivableAmt,
-                status: r.paymentStatus || 'unpaid'
+                status: settlementStatus
             });
             receivableMap[clientName].totalAmount += receivableAmt;
-            if(isPaid) receivableMap[clientName].paidAmount += receivableAmt;
+            receivableMap[clientName].paidAmount += paidAmount;
         }
         // ── 应付：按船公司/承运人汇总（CRM无独立供应商字段，用 carrier 作为应付对象） ──
         const payableAmt = (r.costs||{})._total || 0;
         const carrierName = r.carrier;
         if(carrierName && payableAmt > 0){
             if(!payableMap[carrierName]) payableMap[carrierName] = { supplier: carrierName, orders: [], totalAmount: 0, paidAmount: 0 };
-            const isPaid = r.paymentStatus === 'paid';
+            const settlementStatus = r.settlementStatus || r.paymentStatus || '未结算';
+            const paidAmount = getSettlementPaidAmount(payableAmt, settlementStatus);
             payableMap[carrierName].orders.push({
                 orderId: r.id,
                 orderno: r.orderno || r.id,
                 date: r.etd || r.createdAt,
                 amount: payableAmt,
-                status: r.paymentStatus || 'unpaid'
+                status: settlementStatus
             });
             payableMap[carrierName].totalAmount += payableAmt;
-            if(isPaid) payableMap[carrierName].paidAmount += payableAmt;
+            payableMap[carrierName].paidAmount += paidAmount;
         }
     });
     reconciliationData.receivable = Object.values(receivableMap);
