@@ -1147,7 +1147,7 @@
     <div class="module-card">
         <div id="rsiMonitorPanel">
             <div id="rsiMonitorTitle">
-                <span>RSI多周期监控 <span style="font-weight:normal;font-size:10px;color:#6b7280;">(每分钟更新)</span></span>
+                <span>RSI多周期监控 <span style="font-weight:normal;font-size:10px;color:#6b7280;">(每5分钟更新)</span></span>
                 <button onclick="toggleRsiMonitor()" style="background:none;border:none;cursor:pointer;font-size:11px;color:#166534;">收起</button>
             </div>
             <div style="display:flex;gap:6px;margin-bottom:8px;">
@@ -7095,7 +7095,7 @@ function initAllModules(){
     renderHomeQuoteGrid();
     fetchRsiMonitorData();
     if (!rsiMonitorInterval) {
-        rsiMonitorInterval = setInterval(fetchRsiMonitorData, 60000);
+        rsiMonitorInterval = setInterval(fetchRsiMonitorData, 300000);
     }
     updateDashboardNow();
     setInterval(updateDashboardNow, 1000);
@@ -10436,48 +10436,57 @@ function calculateRSI(closes, period = 14) {
 
 async function fetchRsiForSymbol(symbol, interval) {
     return queueRequest(async () => {
+        console.log(`[RSI] 开始获取 ${symbol} 周期 ${interval} 的数据`);
         const symbolMap = SYMBOL_MAP[symbol] || { twelvedata: symbol, twelvedataAlt: [], proxy: symbol };
         const intervalMap = INTERVAL_MAP[interval] || interval;
+        console.log(`[RSI] ${symbol} 符号映射:`, symbolMap, `周期映射: ${interval} -> ${intervalMap}`);
         
         for (let attempt = 0; attempt < RSI_API_SOURCES.length; attempt++) {
             const apiSource = getNextApiKey();
+            console.log(`[RSI] ${symbol} 尝试第 ${attempt + 1} 个API源: ${apiSource.name} (类型: ${apiSource.type})`);
             
             if (apiSource.type === "proxy") {
                 try {
                     const proxyUrl = DATA_SOURCE.proxyUrl;
                     const url = `${proxyUrl}?endpoint=rsi&symbol=${symbolMap.proxy}&interval=${intervalMap}`;
+                    console.log(`[RSI] ${symbol} Proxy请求URL: ${url}`);
                     const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
                     const data = await res.json();
+                    console.log(`[RSI] ${symbol} Proxy响应:`, data);
                     
                     if (data.status === "ok" && data.rsi != null) {
                         markApiSuccess(apiSource.name);
+                        console.log(`[RSI] ${symbol} Proxy成功获取RSI: ${data.rsi}`);
                         return { rsi: data.rsi, time: data.time || new Date().toISOString() };
                     }
                     
-                    console.warn(`Proxy RSI error for ${symbol}:`, data.message);
+                    console.warn(`[RSI] ${symbol} Proxy失败:`, data.message);
                     markApiFailure(apiSource.name);
                 } catch (err) {
                     markApiFailure(apiSource.name);
-                    console.error(`Proxy RSI fetch error for ${symbol}:`, err.message);
+                    console.error(`[RSI] ${symbol} Proxy请求异常:`, err.message);
                 }
             }
             
             if (apiSource.type === "twelvedata") {
                 const symbolsToTry = [symbolMap.twelvedata, ...(symbolMap.twelvedataAlt || [])];
+                console.log(`[RSI] ${symbol} TwelveData将尝试符号:`, symbolsToTry);
                 
                 for (const twelvedataSymbol of symbolsToTry) {
                     try {
                         const url = `https://api.twelvedata.com/time_series?symbol=${twelvedataSymbol}&interval=${intervalMap}&outputsize=50&apikey=${apiSource.apiKey}`;
+                        console.log(`[RSI] ${symbol} TwelveData请求URL (符号: ${twelvedataSymbol}): ${url.replace(apiSource.apiKey, 'API_KEY_HIDDEN')}`);
                         const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
                         const data = await res.json();
+                        console.log(`[RSI] ${symbol} TwelveData响应 (符号: ${twelvedataSymbol}):`, data.status, data.values ? `数据点数: ${data.values.length}` : '无数据');
                         
                         if (data.status === "error") {
-                            console.warn(`TwelveData error for ${symbol} (${twelvedataSymbol}):`, data.message);
+                            console.warn(`[RSI] ${symbol} TwelveData错误 (符号: ${twelvedataSymbol}):`, data.message);
                             continue;
                         }
                         
                         if (!data || !data.values || data.values.length < 15) {
-                            console.warn(`TwelveData insufficient data for ${symbol} (${twelvedataSymbol})`);
+                            console.warn(`[RSI] ${symbol} TwelveData数据不足 (符号: ${twelvedataSymbol}): 需要15个点，实际${data?.values?.length || 0}个点`);
                             continue;
                         }
                         
@@ -10485,30 +10494,39 @@ async function fetchRsiForSymbol(symbol, interval) {
                         const closes = data.values.map(v => parseFloat(v.close)).reverse();
                         const rsi = calculateRSI(closes);
                         const lastTime = data.values[0].datetime;
+                        console.log(`[RSI] ${symbol} TwelveData成功 (符号: ${twelvedataSymbol}): RSI=${rsi?.toFixed(2)}, 时间=${lastTime}`);
                         return { rsi, time: lastTime };
                     } catch (err) {
-                        console.error(`TwelveData fetch error for ${symbol} (${twelvedataSymbol}):`, err.message);
+                        console.error(`[RSI] ${symbol} TwelveData请求异常 (符号: ${twelvedataSymbol}):`, err.message);
                     }
                 }
                 
                 markApiFailure(apiSource.name);
+                console.warn(`[RSI] ${symbol} 所有TwelveData符号尝试失败`);
             }
         }
         
+        console.error(`[RSI] ${symbol} 所有API源尝试失败，返回null`);
         return null;
     });
 }
 
 async function fetchRsiMonitorData() {
+    console.log(`[RSI] ========== 开始批量获取RSI数据 ==========`);
     for (const symbol of RSI_MONITOR_CONFIG.symbols) {
+        console.log(`[RSI] 处理产品: ${symbol.name} (${symbol.id})`);
         const symbolData = {};
         let lastUpdateTime = null;
         for (const tf of RSI_MONITOR_CONFIG.timeframes) {
+            console.log(`[RSI] ${symbol.name} - 获取 ${tf.label} 数据`);
             const result = await fetchRsiForSymbol(symbol.tvSymbol, tf.interval);
             if (result) {
                 symbolData[tf.id] = result.rsi;
                 if (!lastUpdateTime) lastUpdateTime = result.time;
                 updateRsiDisplay(symbol.id, tf.id, result.rsi);
+                console.log(`[RSI] ${symbol.name} - ${tf.label} 更新成功: ${result.rsi?.toFixed(2)}`);
+            } else {
+                console.error(`[RSI] ${symbol.name} - ${tf.label} 获取失败`);
             }
         }
         if (lastUpdateTime) {
@@ -10517,7 +10535,9 @@ async function fetchRsiMonitorData() {
         }
         rsiMonitorData[symbol.id] = symbolData;
         checkRsiResonance(symbol.id, symbolData);
+        console.log(`[RSI] ${symbol.name} 数据汇总:`, symbolData);
     }
+    console.log(`[RSI] ========== 批量获取完成 ==========`);
 }
 
 function updateRsiDisplay(symbolId, tfId, rsi) {
