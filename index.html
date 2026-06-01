@@ -1168,18 +1168,18 @@
                     <div class="rsi-timeframe-row"><span class="rsi-tf-label">月线</span><span class="rsi-tf-value" id="btcusd-1M">--</span></div>
                     <div class="rsi-update-time" id="btcusd-time">--</div>
                 </div>
-                <div class="rsi-symbol-card" id="rsi-ukoil">
+                <div class="rsi-symbol-card" id="rsi-xauusd">
                     <div class="rsi-symbol-header">
-                        <span>UKOIL 布伦特原油</span>
-                        <span class="alert-badge" id="ukoil-alert"></span>
+                        <span>XAUUSD 黄金</span>
+                        <span class="alert-badge" id="xauusd-alert"></span>
                     </div>
-                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">30分钟</span><span class="rsi-tf-value" id="ukoil-30m">--</span></div>
-                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">1小时</span><span class="rsi-tf-value" id="ukoil-1h">--</span></div>
-                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">4小时</span><span class="rsi-tf-value" id="ukoil-4h">--</span></div>
-                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">日线</span><span class="rsi-tf-value" id="ukoil-1d">--</span></div>
-                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">周线</span><span class="rsi-tf-value" id="ukoil-1w">--</span></div>
-                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">月线</span><span class="rsi-tf-value" id="ukoil-1M">--</span></div>
-                    <div class="rsi-update-time" id="ukoil-time">--</div>
+                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">30分钟</span><span class="rsi-tf-value" id="xauusd-30m">--</span></div>
+                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">1小时</span><span class="rsi-tf-value" id="xauusd-1h">--</span></div>
+                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">4小时</span><span class="rsi-tf-value" id="xauusd-4h">--</span></div>
+                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">日线</span><span class="rsi-tf-value" id="xauusd-1d">--</span></div>
+                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">周线</span><span class="rsi-tf-value" id="xauusd-1w">--</span></div>
+                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">月线</span><span class="rsi-tf-value" id="xauusd-1M">--</span></div>
+                    <div class="rsi-update-time" id="xauusd-time">--</div>
                 </div>
             </div>
         </div>
@@ -10286,14 +10286,13 @@ function openQuoteModal(label, symbol) {
 
 // ===================== RSI 监控功能 (3.0版本) =====================
 const RSI_API_SOURCES = [
-    { name: "proxy", type: "proxy", priority: 1 },
-    { name: "twelvedata", type: "twelvedata", apiKey: "9739029be2174a14a23485c91380abe3", priority: 2 },
-    { name: "twelvedata_demo", type: "twelvedata", apiKey: "demo", priority: 3 }
+    { name: "twelvedata_demo", type: "twelvedata", apiKey: "demo", priority: 1 },
+    { name: "twelvedata_1", type: "twelvedata", apiKey: "9739029be2174a14a23485c91380abe3", priority: 2 }
 ];
 
 const SYMBOL_MAP = {
     "BTCUSD": { twelvedata: "BTC/USD", twelvedataAlt: ["BTCUSD"], proxy: "BTCUSD" },
-    "UKOIL": { twelvedata: "UKOIL", twelvedataAlt: ["BRENT", "BRN", "BZ"], proxy: "UKOIL" }
+    "XAUUSD": { twelvedata: "XAU/USD", twelvedataAlt: ["XAUUSD", "GOLD"], proxy: "XAUUSD" }
 };
 
 const INTERVAL_MAP = {
@@ -10368,7 +10367,7 @@ function markApiSuccess(apiName) {
 const RSI_MONITOR_CONFIG = {
     symbols: [
         { id: "btcusd", name: "BTCUSD", tvSymbol: "BTCUSD" },
-        { id: "ukoil", name: "UKOIL", tvSymbol: "UKOIL" }
+        { id: "xauusd", name: "XAUUSD", tvSymbol: "XAUUSD" }
     ],
     timeframes: [
         { id: "30m", label: "30分钟", interval: "30", minutes: 30 },
@@ -10385,6 +10384,8 @@ const RSI_MONITOR_CONFIG = {
 
 let rsiMonitorData = {};
 let rsiMonitorInterval = null;
+let rsiCache = {};
+const RSI_CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
 
 function toggleRsiMonitor() {
     const panel = document.getElementById("rsiMonitorPanel");
@@ -10436,6 +10437,16 @@ function calculateRSI(closes, period = 14) {
 
 async function fetchRsiForSymbol(symbol, interval) {
     return queueRequest(async () => {
+        // 检查缓存
+        const cacheKey = `${symbol}_${interval}`;
+        const cachedData = rsiCache[cacheKey];
+        const now = Date.now();
+        
+        if (cachedData && (now - cachedData.timestamp) < RSI_CACHE_DURATION) {
+            console.log(`[RSI] ${symbol} ${interval} 使用缓存数据`);
+            return cachedData.data;
+        }
+        
         console.log(`[RSI] 开始获取 ${symbol} 周期 ${interval} 的数据`);
         const symbolMap = SYMBOL_MAP[symbol] || { twelvedata: symbol, twelvedataAlt: [], proxy: symbol };
         const intervalMap = INTERVAL_MAP[interval] || interval;
@@ -10495,7 +10506,9 @@ async function fetchRsiForSymbol(symbol, interval) {
                         const rsi = calculateRSI(closes);
                         const lastTime = data.values[0].datetime;
                         console.log(`[RSI] ${symbol} TwelveData成功 (符号: ${twelvedataSymbol}): RSI=${rsi?.toFixed(2)}, 时间=${lastTime}`);
-                        return { rsi, time: lastTime };
+                        const result = { rsi, time: lastTime };
+                        rsiCache[cacheKey] = { data: result, timestamp: now };
+                        return result;
                     } catch (err) {
                         console.error(`[RSI] ${symbol} TwelveData请求异常 (符号: ${twelvedataSymbol}):`, err.message);
                     }
