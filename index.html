@@ -10284,39 +10284,73 @@ function openQuoteModal(label, symbol) {
     document.body.style.overflow = 'hidden';
 }
 
-// ===================== RSI 监控功能 =====================
+// ===================== RSI 监控功能 (3.0版本) =====================
 const RSI_API_SOURCES = [
-    { name: "twelvedata", apiKey: "9739029be2174a14a23485c91380abe3", priority: 1 }
+    { name: "proxy", type: "proxy", priority: 1 },
+    { name: "twelvedata", type: "twelvedata", apiKey: "9739029be2174a14a23485c91380abe3", priority: 2 },
+    { name: "twelvedata_demo", type: "twelvedata", apiKey: "demo", priority: 3 }
 ];
+
+const SYMBOL_MAP = {
+    "BTCUSD": { twelvedata: "BTC/USD", twelvedataAlt: ["BTCUSD"], proxy: "BTCUSD" },
+    "UKOIL": { twelvedata: "UKOIL", twelvedataAlt: ["BRENT", "BRN", "BZ"], proxy: "UKOIL" }
+};
+
+const INTERVAL_MAP = {
+    "30": "30min",
+    "60": "1h",
+    "240": "4h",
+    "D": "1day",
+    "W": "1week",
+    "M": "1month"
+};
 
 let currentApiIndex = 0;
 let apiFailCount = {};
-let rsiMonitorData = {};
-let rsiMonitorInterval = null;
+let requestQueue = [];
+let isProcessingQueue = false;
+const MAX_CONCURRENT_REQUESTS = 3;
+const REQUEST_DELAY = 200;
 
-const RSI_MONITOR_CONFIG = {
-    symbols: [
-        { id: "btcusd", name: "BTCUSD", tvSymbol: "BTCUSD" },
-        { id: "ukoil", name: "UKOIL", tvSymbol: "UKOIL" }
-    ],
-    timeframes: [
-        { id: "30m", label: "30分钟", interval: "30" },
-        { id: "1h", label: "1小时", interval: "60" },
-        { id: "4h", label: "4小时", interval: "240" },
-        { id: "1d", label: "日线", interval: "D" },
-        { id: "1w", label: "周线", interval: "W" },
-        { id: "1M", label: "月线", interval: "M" }
-    ],
-    oversoldThreshold: 30,
-    overboughtThreshold: 70,
-    resonanceCount: 3
-};
+async function queueRequest(fn) {
+    return new Promise((resolve, reject) => {
+        requestQueue.push({ fn, resolve, reject });
+        processQueue();
+    });
+}
+
+async function processQueue() {
+    if (isProcessingQueue || requestQueue.length === 0) return;
+    isProcessingQueue = true;
+    
+    const batch = requestQueue.splice(0, MAX_CONCURRENT_REQUESTS);
+    
+    await Promise.all(batch.map(async (item) => {
+        try {
+            const result = await item.fn();
+            item.resolve(result);
+        } catch (err) {
+            item.reject(err);
+        }
+    }));
+    
+    if (requestQueue.length > 0) {
+        await new Promise(r => setTimeout(r, REQUEST_DELAY));
+    }
+    
+    isProcessingQueue = false;
+    if (requestQueue.length > 0) {
+        processQueue();
+    }
+}
 
 function getNextApiKey() {
     const sortedSources = RSI_API_SOURCES.sort((a, b) => a.priority - b.priority);
     for (const source of sortedSources) {
         const failCount = apiFailCount[source.name] || 0;
-        if (failCount < 3) return source;
+        if (failCount < 3) {
+            return source;
+        }
     }
     apiFailCount = {};
     return sortedSources[0];
@@ -10324,11 +10358,33 @@ function getNextApiKey() {
 
 function markApiFailure(apiName) {
     apiFailCount[apiName] = (apiFailCount[apiName] || 0) + 1;
+    console.warn(`API ${apiName} 失败次数: ${apiFailCount[apiName]}`);
 }
 
 function markApiSuccess(apiName) {
     apiFailCount[apiName] = 0;
 }
+
+const RSI_MONITOR_CONFIG = {
+    symbols: [
+        { id: "btcusd", name: "BTCUSD", tvSymbol: "BTCUSD" },
+        { id: "ukoil", name: "UKOIL", tvSymbol: "UKOIL" }
+    ],
+    timeframes: [
+        { id: "30m", label: "30分钟", interval: "30", minutes: 30 },
+        { id: "1h", label: "1小时", interval: "60", minutes: 60 },
+        { id: "4h", label: "4小时", interval: "240", minutes: 240 },
+        { id: "1d", label: "日线", interval: "D", minutes: 1440 },
+        { id: "1w", label: "周线", interval: "W", minutes: 10080 },
+        { id: "1M", label: "月线", interval: "M", minutes: 43200 }
+    ],
+    oversoldThreshold: 30,
+    overboughtThreshold: 70,
+    resonanceCount: 3
+};
+
+let rsiMonitorData = {};
+let rsiMonitorInterval = null;
 
 function toggleRsiMonitor() {
     const panel = document.getElementById("rsiMonitorPanel");
@@ -10339,7 +10395,7 @@ function toggleRsiMonitor() {
     if (!collapsed) {
         fetchRsiMonitorData();
         if (!rsiMonitorInterval) {
-            rsiMonitorInterval = setInterval(fetchRsiMonitorData, 60000);
+            rsiMonitorInterval = setInterval(fetchRsiMonitorData, 300000);
         }
     } else {
         if (rsiMonitorInterval) {
@@ -10351,81 +10407,96 @@ function toggleRsiMonitor() {
 
 function calculateRSI(closes, period = 14) {
     if (!closes || closes.length < period + 1) return null;
-    let gains = 0, losses = 0;
-    for (let i = closes.length - period; i < closes.length; i++) {
+    
+    let prevAvgGain = 0;
+    let prevAvgLoss = 0;
+    
+    for (let i = 1; i <= period; i++) {
         const change = closes[i] - closes[i - 1];
-        if (change > 0) gains += change;
-        else losses -= change;
+        if (change > 0) prevAvgGain += change;
+        else prevAvgLoss += Math.abs(change);
     }
-    const avgGain = gains / period;
-    const avgLoss = losses / period;
-    if (avgLoss === 0) return 100;
-    const rs = avgGain / avgLoss;
+    
+    prevAvgGain = prevAvgGain / period;
+    prevAvgLoss = prevAvgLoss / period;
+    
+    for (let i = period + 1; i < closes.length; i++) {
+        const change = closes[i] - closes[i - 1];
+        const gain = change > 0 ? change : 0;
+        const loss = change < 0 ? Math.abs(change) : 0;
+        
+        prevAvgGain = (prevAvgGain * (period - 1) + gain) / period;
+        prevAvgLoss = (prevAvgLoss * (period - 1) + loss) / period;
+    }
+    
+    if (prevAvgLoss === 0) return 100;
+    const rs = prevAvgGain / prevAvgLoss;
     return 100 - (100 / (1 + rs));
 }
 
 async function fetchRsiForSymbol(symbol, interval) {
-    let twelvedataSymbol;
-    if (symbol === "BTCUSD") {
-        twelvedataSymbol = "BTC/USD";
-    } else if (symbol === "UKOIL") {
-        twelvedataSymbol = "UKOILUSD";
-    } else {
-        twelvedataSymbol = symbol;
-    }
-    
-    const apiSource = getNextApiKey();
-    try {
-        const url = `https://api.twelvedata.com/time_series?symbol=${twelvedataSymbol}&interval=${interval}&outputsize=100&apikey=${apiSource.apiKey}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data.status === "error" || (data.code && data.code !== 200)) {
-            markApiFailure(apiSource.name);
-            console.warn(`RSI API error for ${symbol}:`, data);
-            return null;
+    return queueRequest(async () => {
+        const symbolMap = SYMBOL_MAP[symbol] || { twelvedata: symbol, twelvedataAlt: [], proxy: symbol };
+        const intervalMap = INTERVAL_MAP[interval] || interval;
+        
+        for (let attempt = 0; attempt < RSI_API_SOURCES.length; attempt++) {
+            const apiSource = getNextApiKey();
+            
+            if (apiSource.type === "proxy") {
+                try {
+                    const proxyUrl = DATA_SOURCE.proxyUrl;
+                    const url = `${proxyUrl}?endpoint=rsi&symbol=${symbolMap.proxy}&interval=${intervalMap}`;
+                    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+                    const data = await res.json();
+                    
+                    if (data.status === "ok" && data.rsi != null) {
+                        markApiSuccess(apiSource.name);
+                        return { rsi: data.rsi, time: data.time || new Date().toISOString() };
+                    }
+                    
+                    console.warn(`Proxy RSI error for ${symbol}:`, data.message);
+                    markApiFailure(apiSource.name);
+                } catch (err) {
+                    markApiFailure(apiSource.name);
+                    console.error(`Proxy RSI fetch error for ${symbol}:`, err.message);
+                }
+            }
+            
+            if (apiSource.type === "twelvedata") {
+                const symbolsToTry = [symbolMap.twelvedata, ...(symbolMap.twelvedataAlt || [])];
+                
+                for (const twelvedataSymbol of symbolsToTry) {
+                    try {
+                        const url = `https://api.twelvedata.com/time_series?symbol=${twelvedataSymbol}&interval=${intervalMap}&outputsize=50&apikey=${apiSource.apiKey}`;
+                        const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+                        const data = await res.json();
+                        
+                        if (data.status === "error") {
+                            console.warn(`TwelveData error for ${symbol} (${twelvedataSymbol}):`, data.message);
+                            continue;
+                        }
+                        
+                        if (!data || !data.values || data.values.length < 15) {
+                            console.warn(`TwelveData insufficient data for ${symbol} (${twelvedataSymbol})`);
+                            continue;
+                        }
+                        
+                        markApiSuccess(apiSource.name);
+                        const closes = data.values.map(v => parseFloat(v.close)).reverse();
+                        const rsi = calculateRSI(closes);
+                        const lastTime = data.values[0].datetime;
+                        return { rsi, time: lastTime };
+                    } catch (err) {
+                        console.error(`TwelveData fetch error for ${symbol} (${twelvedataSymbol}):`, err.message);
+                    }
+                }
+                
+                markApiFailure(apiSource.name);
+            }
         }
-        if (!data || !data.values || data.values.length < 20) {
-            markApiFailure(apiSource.name);
-            console.warn(`RSI insufficient data for ${symbol}`);
-            return null;
-        }
-        markApiSuccess(apiSource.name);
-        const closes = data.values.map(v => parseFloat(v.close)).reverse();
-        const rsi = calculateRSI_EMA(closes, 14);
-        const lastTime = data.values[0].datetime;
-        return { rsi, time: lastTime };
-    } catch (err) {
-        markApiFailure(apiSource.name);
-        console.error(`RSI fetch error for ${symbol}:`, err);
+        
         return null;
-    }
-}
-
-function calculateRSI_EMA(closes, period = 14) {
-    if (!closes || closes.length < period + 1) return null;
-    
-    let gains = [];
-    let losses = [];
-    
-    for (let i = 1; i < closes.length; i++) {
-        const change = closes[i] - closes[i - 1];
-        gains.push(change > 0 ? change : 0);
-        losses.push(change < 0 ? Math.abs(change) : 0);
-    }
-    
-    if (gains.length < period) return null;
-    
-    let avgGain = gains.slice(0, period).reduce((a, b) => a + b, 0) / period;
-    let avgLoss = losses.slice(0, period).reduce((a, b) => a + b, 0) / period;
-    
-    for (let i = period; i < gains.length; i++) {
-        avgGain = (avgGain * (period - 1) + gains[i]) / period;
-        avgLoss = (avgLoss * (period - 1) + losses[i]) / period;
-    }
-    
-    if (avgLoss === 0) return 100;
-    const rs = avgGain / avgLoss;
-    return 100 - (100 / (1 + rs));
+    });
 }
 
 async function fetchRsiMonitorData() {
