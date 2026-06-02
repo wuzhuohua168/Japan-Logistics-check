@@ -549,71 +549,6 @@
             cursor: pointer;
             position: relative;
         }
-        
-        /* RSI Monitor Styles */
-        #rsiMonitorPanel {
-            margin-bottom: 10px;
-            padding: 10px;
-            border-radius: 8px;
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-        }
-        #rsiMonitorPanel.collapsed { display: none; }
-        #rsiMonitorTitle {
-            font-weight: bold;
-            font-size: 12px;
-            color: #166534;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .rsi-monitor-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        .rsi-symbol-card {
-            background: #fff;
-            border-radius: 6px;
-            padding: 8px;
-            border: 1px solid #e5e7eb;
-        }
-        .rsi-symbol-header {
-            font-weight: 600;
-            font-size: 12px;
-            color: #374151;
-            margin-bottom: 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .rsi-symbol-header .alert-badge {
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: bold;
-        }
-        .rsi-symbol-header .alert-badge.oversold { background: #dcfce7; color: #166534; }
-        .rsi-symbol-header .alert-badge.overbought { background: #fee2e2; color: #991b1b; }
-        .rsi-symbol-header .alert-badge.resonance { background: #fbbf24; color: #78350f; }
-        .rsi-timeframe-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            padding: 2px 0;
-        }
-        .rsi-tf-label { color: #6b7280; }
-        .rsi-tf-value { font-weight: 600; }
-        .rsi-tf-value.oversold { color: #16a34a; }
-        .rsi-tf-value.overbought { color: #dc2626; }
-        .rsi-tf-value.neutral { color: #374151; }
-        .rsi-update-time {
-            font-size: 9px;
-            color: #9ca3af;
-            margin-top: 4px;
-            text-align: right;
-        }
     </style>
 </head>
 <body>
@@ -1145,44 +1080,6 @@
     </div>
 
     <div class="module-card">
-        <div id="rsiMonitorPanel">
-            <div id="rsiMonitorTitle">
-                <span>RSI多周期监控 <span style="font-weight:normal;font-size:10px;color:#6b7280;">(每5分钟更新)</span></span>
-                <button onclick="toggleRsiMonitor()" style="background:none;border:none;cursor:pointer;font-size:11px;color:#166534;">收起</button>
-            </div>
-            <div style="display:flex;gap:6px;margin-bottom:8px;">
-                <input type="text" id="rsi-custom-symbol" placeholder="输入代码如 XAUUSD" style="flex:1;padding:4px 8px;border-radius:4px;border:1px solid #d1d5db;font-size:11px;">
-                <button onclick="addCustomRsiSymbol()" style="background:#166534;color:#fff;border:none;padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;">添加</button>
-            </div>
-            <div class="rsi-monitor-grid" id="rsi-monitor-grid">
-                <div class="rsi-symbol-card" id="rsi-btcusd">
-                    <div class="rsi-symbol-header">
-                        <span>BTCUSD 比特币</span>
-                        <span class="alert-badge" id="btcusd-alert"></span>
-                    </div>
-                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">30分钟</span><span class="rsi-tf-value" id="btcusd-30m">--</span></div>
-                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">1小时</span><span class="rsi-tf-value" id="btcusd-1h">--</span></div>
-                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">4小时</span><span class="rsi-tf-value" id="btcusd-4h">--</span></div>
-                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">日线</span><span class="rsi-tf-value" id="btcusd-1d">--</span></div>
-                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">周线</span><span class="rsi-tf-value" id="btcusd-1w">--</span></div>
-                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">月线</span><span class="rsi-tf-value" id="btcusd-1M">--</span></div>
-                    <div class="rsi-update-time" id="btcusd-time">--</div>
-                </div>
-                <div class="rsi-symbol-card" id="rsi-ukoil">
-                    <div class="rsi-symbol-header">
-                        <span>UKOIL WTI原油</span>
-                        <span class="alert-badge" id="ukoil-alert"></span>
-                    </div>
-                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">30分钟</span><span class="rsi-tf-value" id="ukoil-30m">--</span></div>
-                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">1小时</span><span class="rsi-tf-value" id="ukoil-1h">--</span></div>
-                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">4小时</span><span class="rsi-tf-value" id="ukoil-4h">--</span></div>
-                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">日线</span><span class="rsi-tf-value" id="ukoil-1d">--</span></div>
-                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">周线</span><span class="rsi-tf-value" id="ukoil-1w">--</span></div>
-                    <div class="rsi-timeframe-row"><span class="rsi-tf-label">月线</span><span class="rsi-tf-value" id="ukoil-1M">--</span></div>
-                    <div class="rsi-update-time" id="ukoil-time">--</div>
-                </div>
-            </div>
-        </div>
         <div class="title" data-i18n="quoteComponent">报价表组件</div>
         <div id="home-quote-grid" class="market-quote-grid"></div>
     </div>
@@ -7093,10 +6990,6 @@ function initAllModules(){
     initTimezoneInput();
     updateDashboard();
     renderHomeQuoteGrid();
-    fetchRsiMonitorData();
-    if (!rsiMonitorInterval) {
-        rsiMonitorInterval = setInterval(fetchRsiMonitorData, 300000);
-    }
     updateDashboardNow();
     setInterval(updateDashboardNow, 1000);
     updateStorageStatus();
@@ -10282,390 +10175,6 @@ function openQuoteModal(label, symbol) {
     };
     modal.classList.add('show');
     document.body.style.overflow = 'hidden';
-}
-
-// ===================== RSI 监控功能 (3.0版本) =====================
-const RSI_API_SOURCES = [
-    { name: "twelvedata_demo", type: "twelvedata", apiKey: "demo", priority: 1 },
-    { name: "twelvedata_1", type: "twelvedata", apiKey: "9739029be2174a14a23485c91380abe3", priority: 2 }
-];
-
-const SYMBOL_MAP = {
-    "BTCUSD": { twelvedata: "BTC/USD", twelvedataAlt: ["BTCUSD"], proxy: "BTCUSD" },
-    "UKOIL": { twelvedata: "CL", twelvedataAlt: ["WTI", "USOIL"], proxy: "UKOIL" }
-};
-
-const INTERVAL_MAP = {
-    "30": "30min",
-    "60": "1h",
-    "240": "4h",
-    "D": "1day",
-    "W": "1week",
-    "M": "1month"
-};
-
-let currentApiIndex = 0;
-let apiFailCount = {};
-let requestQueue = [];
-let isProcessingQueue = false;
-const MAX_CONCURRENT_REQUESTS = 3;
-const REQUEST_DELAY = 200;
-
-async function queueRequest(fn) {
-    return new Promise((resolve, reject) => {
-        requestQueue.push({ fn, resolve, reject });
-        processQueue();
-    });
-}
-
-async function processQueue() {
-    if (isProcessingQueue || requestQueue.length === 0) return;
-    isProcessingQueue = true;
-    
-    const batch = requestQueue.splice(0, MAX_CONCURRENT_REQUESTS);
-    
-    await Promise.all(batch.map(async (item) => {
-        try {
-            const result = await item.fn();
-            item.resolve(result);
-        } catch (err) {
-            item.reject(err);
-        }
-    }));
-    
-    if (requestQueue.length > 0) {
-        await new Promise(r => setTimeout(r, REQUEST_DELAY));
-    }
-    
-    isProcessingQueue = false;
-    if (requestQueue.length > 0) {
-        processQueue();
-    }
-}
-
-function getNextApiKey() {
-    const sortedSources = RSI_API_SOURCES.sort((a, b) => a.priority - b.priority);
-    for (const source of sortedSources) {
-        const failCount = apiFailCount[source.name] || 0;
-        if (failCount < 3) {
-            return source;
-        }
-    }
-    apiFailCount = {};
-    return sortedSources[0];
-}
-
-function markApiFailure(apiName) {
-    apiFailCount[apiName] = (apiFailCount[apiName] || 0) + 1;
-    console.warn(`API ${apiName} 失败次数: ${apiFailCount[apiName]}`);
-}
-
-function markApiSuccess(apiName) {
-    apiFailCount[apiName] = 0;
-}
-
-const RSI_MONITOR_CONFIG = {
-    symbols: [
-        { id: "btcusd", name: "BTCUSD", tvSymbol: "BTCUSD" },
-        { id: "ukoil", name: "UKOIL", tvSymbol: "UKOIL" }
-    ],
-    timeframes: [
-        { id: "30m", label: "30分钟", interval: "30", minutes: 30 },
-        { id: "1h", label: "1小时", interval: "60", minutes: 60 },
-        { id: "4h", label: "4小时", interval: "240", minutes: 240 },
-        { id: "1d", label: "日线", interval: "D", minutes: 1440 },
-        { id: "1w", label: "周线", interval: "W", minutes: 10080 },
-        { id: "1M", label: "月线", interval: "M", minutes: 43200 }
-    ],
-    oversoldThreshold: 30,
-    overboughtThreshold: 70,
-    resonanceCount: 3
-};
-
-let rsiMonitorData = {};
-let rsiMonitorInterval = null;
-let rsiCache = {};
-const RSI_CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
-
-function toggleRsiMonitor() {
-    const panel = document.getElementById("rsiMonitorPanel");
-    const btn = document.querySelector('[onclick="toggleRsiMonitor()"]');
-    if (!panel) return;
-    const collapsed = panel.classList.toggle("collapsed");
-    if (btn) btn.textContent = collapsed ? "RSI监控" : "收起";
-    if (!collapsed) {
-        fetchRsiMonitorData();
-        if (!rsiMonitorInterval) {
-            rsiMonitorInterval = setInterval(fetchRsiMonitorData, 300000);
-        }
-    } else {
-        if (rsiMonitorInterval) {
-            clearInterval(rsiMonitorInterval);
-            rsiMonitorInterval = null;
-        }
-    }
-}
-
-function calculateRSI(closes, period = 14) {
-    if (!closes || closes.length < period + 1) return null;
-    
-    let prevAvgGain = 0;
-    let prevAvgLoss = 0;
-    
-    for (let i = 1; i <= period; i++) {
-        const change = closes[i] - closes[i - 1];
-        if (change > 0) prevAvgGain += change;
-        else prevAvgLoss += Math.abs(change);
-    }
-    
-    prevAvgGain = prevAvgGain / period;
-    prevAvgLoss = prevAvgLoss / period;
-    
-    for (let i = period + 1; i < closes.length; i++) {
-        const change = closes[i] - closes[i - 1];
-        const gain = change > 0 ? change : 0;
-        const loss = change < 0 ? Math.abs(change) : 0;
-        
-        prevAvgGain = (prevAvgGain * (period - 1) + gain) / period;
-        prevAvgLoss = (prevAvgLoss * (period - 1) + loss) / period;
-    }
-    
-    if (prevAvgLoss === 0) return 100;
-    const rs = prevAvgGain / prevAvgLoss;
-    return 100 - (100 / (1 + rs));
-}
-
-async function fetchRsiForSymbol(symbol, interval) {
-    return queueRequest(async () => {
-        // 检查缓存
-        const cacheKey = `${symbol}_${interval}`;
-        const cachedData = rsiCache[cacheKey];
-        const now = Date.now();
-        
-        if (cachedData && (now - cachedData.timestamp) < RSI_CACHE_DURATION) {
-            console.log(`[RSI] ${symbol} ${interval} 使用缓存数据`);
-            return cachedData.data;
-        }
-        
-        console.log(`[RSI] 开始获取 ${symbol} 周期 ${interval} 的数据`);
-        const symbolMap = SYMBOL_MAP[symbol] || { twelvedata: symbol, twelvedataAlt: [], proxy: symbol };
-        const intervalMap = INTERVAL_MAP[interval] || interval;
-        console.log(`[RSI] ${symbol} 符号映射:`, symbolMap, `周期映射: ${interval} -> ${intervalMap}`);
-        
-        for (let attempt = 0; attempt < RSI_API_SOURCES.length; attempt++) {
-            const apiSource = getNextApiKey();
-            console.log(`[RSI] ${symbol} 尝试第 ${attempt + 1} 个API源: ${apiSource.name} (类型: ${apiSource.type})`);
-            
-            if (apiSource.type === "proxy") {
-                try {
-                    const proxyUrl = DATA_SOURCE.proxyUrl;
-                    const url = `${proxyUrl}?endpoint=rsi&symbol=${symbolMap.proxy}&interval=${intervalMap}`;
-                    console.log(`[RSI] ${symbol} Proxy请求URL: ${url}`);
-                    const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
-                    const data = await res.json();
-                    console.log(`[RSI] ${symbol} Proxy响应:`, data);
-                    
-                    if (data.status === "ok" && data.rsi != null) {
-                        markApiSuccess(apiSource.name);
-                        console.log(`[RSI] ${symbol} Proxy成功获取RSI: ${data.rsi}`);
-                        return { rsi: data.rsi, time: data.time || new Date().toISOString() };
-                    }
-                    
-                    console.warn(`[RSI] ${symbol} Proxy失败:`, data.message);
-                    markApiFailure(apiSource.name);
-                } catch (err) {
-                    markApiFailure(apiSource.name);
-                    console.error(`[RSI] ${symbol} Proxy请求异常:`, err.message);
-                }
-            }
-            
-            if (apiSource.type === "twelvedata") {
-                const symbolsToTry = [symbolMap.twelvedata, ...(symbolMap.twelvedataAlt || [])];
-                console.log(`[RSI] ${symbol} TwelveData将尝试符号:`, symbolsToTry);
-                
-                for (const twelvedataSymbol of symbolsToTry) {
-                    try {
-                        const url = `https://api.twelvedata.com/time_series?symbol=${twelvedataSymbol}&interval=${intervalMap}&outputsize=50&apikey=${apiSource.apiKey}`;
-                        console.log(`[RSI] ${symbol} TwelveData请求URL (符号: ${twelvedataSymbol}): ${url.replace(apiSource.apiKey, 'API_KEY_HIDDEN')}`);
-                        const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
-                        const data = await res.json();
-                        console.log(`[RSI] ${symbol} TwelveData响应 (符号: ${twelvedataSymbol}):`, data.status, data.values ? `数据点数: ${data.values.length}` : '无数据');
-                        
-                        if (data.status === "error") {
-                            console.warn(`[RSI] ${symbol} TwelveData错误 (符号: ${twelvedataSymbol}):`, data.message);
-                            continue;
-                        }
-                        
-                        if (!data || !data.values || data.values.length < 15) {
-                            console.warn(`[RSI] ${symbol} TwelveData数据不足 (符号: ${twelvedataSymbol}): 需要15个点，实际${data?.values?.length || 0}个点`);
-                            continue;
-                        }
-                        
-                        markApiSuccess(apiSource.name);
-                        const closes = data.values.map(v => parseFloat(v.close)).reverse();
-                        const rsi = calculateRSI(closes);
-                        const lastTime = data.values[0].datetime;
-                        console.log(`[RSI] ${symbol} TwelveData成功 (符号: ${twelvedataSymbol}): RSI=${rsi?.toFixed(2)}, 时间=${lastTime}`);
-                        const result = { rsi, time: lastTime };
-                        rsiCache[cacheKey] = { data: result, timestamp: now };
-                        return result;
-                    } catch (err) {
-                        console.error(`[RSI] ${symbol} TwelveData请求异常 (符号: ${twelvedataSymbol}):`, err.message);
-                    }
-                }
-                
-                markApiFailure(apiSource.name);
-                console.warn(`[RSI] ${symbol} 所有TwelveData符号尝试失败`);
-            }
-        }
-        
-        console.error(`[RSI] ${symbol} 所有API源尝试失败，返回null`);
-        return null;
-    });
-}
-
-async function fetchRsiMonitorData() {
-    console.log(`[RSI] ========== 开始批量获取RSI数据 ==========`);
-    for (const symbol of RSI_MONITOR_CONFIG.symbols) {
-        console.log(`[RSI] 处理产品: ${symbol.name} (${symbol.id})`);
-        const symbolData = {};
-        let lastUpdateTime = null;
-        for (const tf of RSI_MONITOR_CONFIG.timeframes) {
-            console.log(`[RSI] ${symbol.name} - 获取 ${tf.label} 数据`);
-            const result = await fetchRsiForSymbol(symbol.tvSymbol, tf.interval);
-            if (result) {
-                symbolData[tf.id] = result.rsi;
-                if (!lastUpdateTime) lastUpdateTime = result.time;
-                updateRsiDisplay(symbol.id, tf.id, result.rsi);
-                console.log(`[RSI] ${symbol.name} - ${tf.label} 更新成功: ${result.rsi?.toFixed(2)}`);
-            } else {
-                console.error(`[RSI] ${symbol.name} - ${tf.label} 获取失败`);
-            }
-        }
-        if (lastUpdateTime) {
-            const timeEl = document.getElementById(`${symbol.id}-time`);
-            if (timeEl) timeEl.textContent = lastUpdateTime;
-        }
-        rsiMonitorData[symbol.id] = symbolData;
-        checkRsiResonance(symbol.id, symbolData);
-        console.log(`[RSI] ${symbol.name} 数据汇总:`, symbolData);
-    }
-    console.log(`[RSI] ========== 批量获取完成 ==========`);
-}
-
-function updateRsiDisplay(symbolId, tfId, rsi) {
-    const el = document.getElementById(`${symbolId}-${tfId}`);
-    if (!el) return;
-    el.textContent = rsi != null ? rsi.toFixed(1) : "--";
-    el.classList.remove("oversold", "overbought", "neutral");
-    if (rsi != null) {
-        if (rsi <= RSI_MONITOR_CONFIG.oversoldThreshold) el.classList.add("oversold");
-        else if (rsi >= RSI_MONITOR_CONFIG.overboughtThreshold) el.classList.add("overbought");
-        else el.classList.add("neutral");
-    }
-}
-
-function checkRsiResonance(symbolId, data) {
-    const alertEl = document.getElementById(`${symbolId}-alert`);
-    if (!alertEl) return;
-    alertEl.className = "alert-badge";
-    alertEl.textContent = "";
-    const values = Object.values(data).filter(v => v != null);
-    if (values.length === 0) return;
-    const oversoldCount = values.filter(v => v <= RSI_MONITOR_CONFIG.oversoldThreshold).length;
-    const overboughtCount = values.filter(v => v >= RSI_MONITOR_CONFIG.overboughtThreshold).length;
-    if (oversoldCount >= RSI_MONITOR_CONFIG.resonanceCount) {
-        alertEl.classList.add("resonance");
-        alertEl.textContent = `超卖共振(${oversoldCount})`;
-    } else if (overboughtCount >= RSI_MONITOR_CONFIG.resonanceCount) {
-        alertEl.classList.add("resonance");
-        alertEl.textContent = `超买共振(${overboughtCount})`;
-    } else if (oversoldCount > 0) {
-        alertEl.classList.add("oversold");
-        alertEl.textContent = `超卖(${oversoldCount})`;
-    } else if (overboughtCount > 0) {
-        alertEl.classList.add("overbought");
-        alertEl.textContent = `超买(${overboughtCount})`;
-    }
-}
-
-function addCustomRsiSymbol() {
-    const input = document.getElementById("rsi-custom-symbol");
-    if (!input) return;
-    const symbol = input.value.trim().toUpperCase();
-    if (!symbol) return;
-    
-    const existingIds = RSI_MONITOR_CONFIG.symbols.map(s => s.id);
-    const symbolId = symbol.toLowerCase().replace(/[^a-z0-9]/g, "");
-    
-    if (existingIds.includes(symbolId)) {
-        alert(`${symbol} 已在监控列表中`);
-        return;
-    }
-    
-    RSI_MONITOR_CONFIG.symbols.push({
-        id: symbolId,
-        name: symbol,
-        tvSymbol: symbol
-    });
-    
-    const grid = document.getElementById("rsi-monitor-grid");
-    if (!grid) return;
-    
-    const card = document.createElement("div");
-    card.className = "rsi-symbol-card";
-    card.id = `rsi-${symbolId}`;
-    
-    let timeframesHtml = RSI_MONITOR_CONFIG.timeframes.map(tf => 
-        `<div class="rsi-timeframe-row"><span class="rsi-tf-label">${tf.label}</span><span class="rsi-tf-value" id="${symbolId}-${tf.id}">--</span></div>`
-    ).join("");
-    
-    card.innerHTML = `
-        <div class="rsi-symbol-header">
-            <span>${symbol}</span>
-            <span style="cursor:pointer;margin-left:auto;margin-right:6px;font-size:10px;color:#dc2626;" onclick="removeRsiSymbol('${symbolId}')">✕</span>
-            <span class="alert-badge" id="${symbolId}-alert"></span>
-        </div>
-        ${timeframesHtml}
-        <div class="rsi-update-time" id="${symbolId}-time">--</div>
-    `;
-    
-    grid.appendChild(card);
-    input.value = "";
-    
-    fetchRsiForCustomSymbol(symbolId);
-}
-
-function removeRsiSymbol(symbolId) {
-    const card = document.getElementById(`rsi-${symbolId}`);
-    if (card) card.remove();
-    RSI_MONITOR_CONFIG.symbols = RSI_MONITOR_CONFIG.symbols.filter(s => s.id !== symbolId);
-    delete rsiMonitorData[symbolId];
-}
-
-async function fetchRsiForCustomSymbol(symbolId) {
-    const symbol = RSI_MONITOR_CONFIG.symbols.find(s => s.id === symbolId);
-    if (!symbol) return;
-    
-    const symbolData = {};
-    let lastUpdateTime = null;
-    
-    for (const tf of RSI_MONITOR_CONFIG.timeframes) {
-        const result = await fetchRsiForSymbol(symbol.tvSymbol, tf.interval);
-        if (result) {
-            symbolData[tf.id] = result.rsi;
-            if (!lastUpdateTime) lastUpdateTime = result.time;
-            updateRsiDisplay(symbol.id, tf.id, result.rsi);
-        }
-    }
-    
-    if (lastUpdateTime) {
-        const timeEl = document.getElementById(`${symbol.id}-time`);
-        if (timeEl) timeEl.textContent = lastUpdateTime;
-    }
-    
-    rsiMonitorData[symbol.id] = symbolData;
-    checkRsiResonance(symbol.id, symbolData);
 }
 
 function closeQuoteModal(event) {
@@ -16910,10 +16419,74 @@ input{
         height:100dvh;
     }
 }
+#rsiMonitorPanel{
+    margin:10px;
+    padding:10px;
+    border-radius:8px;
+    background:#f0fdf4;
+    border:1px solid #bbf7d0;
+}
+#rsiMonitorPanel.collapsed{display:none;}
+#rsiMonitorTitle{font-weight:bold;font-size:13px;color:#166534;margin-bottom:8px;}
+.rsi-monitor-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.rsi-symbol-card{background:#fff;border-radius:6px;padding:10px;border:1px solid #e5e7eb;}
+.rsi-symbol-header{font-weight:600;font-size:13px;color:#374151;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;}
+.rsi-symbol-header .alert-badge{padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;}
+.rsi-symbol-header .alert-badge.oversold{background:#dcfce7;color:#166534;}
+.rsi-symbol-header .alert-badge.overbought{background:#fee2e2;color:#991b1b;}
+.rsi-symbol-header .alert-badge.resonance{background:#fef08a;color:#854d0e;animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
+.rsi-timeframe-row{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px dashed #f3f4f6;}
+.rsi-timeframe-row:last-child{border-bottom:none;}
+.rsi-tf-label{color:#6b7280;}
+.rsi-tf-value{font-weight:600;}
+.rsi-tf-value.oversold{color:#16a34a;}
+.rsi-tf-value.overbought{color:#dc2626;}
+.rsi-tf-value.neutral{color:#374151;}
+.rsi-update-time{font-size:11px;color:#9ca3af;margin-top:8px;text-align:right;}
 </style></head><body><div class="main">
 
 <div class="control-panel">
 
+    <div id="rsiMonitorPanel">
+        <div id="rsiMonitorTitle">RSI多周期监控 <span style="font-weight:normal;font-size:11px;color:#6b7280;">(每5分钟更新)</span></div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <input type="text" id="rsi-custom-symbol" placeholder="输入代码如 SP500" style="flex:1;padding:6px 10px;border-radius:6px;border:1px solid #d1d5db;font-size:12px;">
+            <button onclick="addCustomRsiSymbol()" style="background:#166534;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;">添加</button>
+        </div>
+        <div class="rsi-monitor-grid" id="rsi-monitor-grid">
+            <div class="rsi-symbol-card" id="rsi-btcusd">
+                <div class="rsi-symbol-header"><span>BTCUSD</span><span class="alert-badge" id="btcusd-alert"></span></div>
+                <div class="rsi-timeframe-row"><span class="rsi-tf-label">30分钟</span><span class="rsi-tf-value" id="btcusd-30m">--</span></div>
+                <div class="rsi-timeframe-row"><span class="rsi-tf-label">1小时</span><span class="rsi-tf-value" id="btcusd-1h">--</span></div>
+                <div class="rsi-timeframe-row"><span class="rsi-tf-label">4小时</span><span class="rsi-tf-value" id="btcusd-4h">--</span></div>
+                <div class="rsi-timeframe-row"><span class="rsi-tf-label">日线</span><span class="rsi-tf-value" id="btcusd-1d">--</span></div>
+                <div class="rsi-timeframe-row"><span class="rsi-tf-label">周线</span><span class="rsi-tf-value" id="btcusd-1w">--</span></div>
+                <div class="rsi-timeframe-row"><span class="rsi-tf-label">月线</span><span class="rsi-tf-value" id="btcusd-1M">--</span></div>
+                <div class="rsi-update-time" id="btcusd-time">--</div>
+            </div>
+            <div class="rsi-symbol-card" id="rsi-ukoil">
+                <div class="rsi-symbol-header"><span>UKOIL</span><span class="alert-badge" id="ukoil-alert"></span></div>
+                <div class="rsi-timeframe-row"><span class="rsi-tf-label">30分钟</span><span class="rsi-tf-value" id="ukoil-30m">--</span></div>
+                <div class="rsi-timeframe-row"><span class="rsi-tf-label">1小时</span><span class="rsi-tf-value" id="ukoil-1h">--</span></div>
+                <div class="rsi-timeframe-row"><span class="rsi-tf-label">4小时</span><span class="rsi-tf-value" id="ukoil-4h">--</span></div>
+                <div class="rsi-timeframe-row"><span class="rsi-tf-label">日线</span><span class="rsi-tf-value" id="ukoil-1d">--</span></div>
+                <div class="rsi-timeframe-row"><span class="rsi-tf-label">周线</span><span class="rsi-tf-value" id="ukoil-1w">--</span></div>
+                <div class="rsi-timeframe-row"><span class="rsi-tf-label">月线</span><span class="rsi-tf-value" id="ukoil-1M">--</span></div>
+                <div class="rsi-update-time" id="ukoil-time">--</div>
+            </div>
+            <div class="rsi-symbol-card" id="rsi-xauusd">
+                <div class="rsi-symbol-header"><span>XAUUSD</span><span class="alert-badge" id="xauusd-alert"></span></div>
+                <div class="rsi-timeframe-row"><span class="rsi-tf-label">30分钟</span><span class="rsi-tf-value" id="xauusd-30m">--</span></div>
+                <div class="rsi-timeframe-row"><span class="rsi-tf-label">1小时</span><span class="rsi-tf-value" id="xauusd-1h">--</span></div>
+                <div class="rsi-timeframe-row"><span class="rsi-tf-label">4小时</span><span class="rsi-tf-value" id="xauusd-4h">--</span></div>
+                <div class="rsi-timeframe-row"><span class="rsi-tf-label">日线</span><span class="rsi-tf-value" id="xauusd-1d">--</span></div>
+                <div class="rsi-timeframe-row"><span class="rsi-tf-label">周线</span><span class="rsi-tf-value" id="xauusd-1w">--</span></div>
+                <div class="rsi-timeframe-row"><span class="rsi-tf-label">月线</span><span class="rsi-tf-value" id="xauusd-1M">--</span></div>
+                <div class="rsi-update-time" id="xauusd-time">--</div>
+            </div>
+        </div>
+    </div>
     <div class="chart-grid" id="quote-grid"></div>
     <div id="cycleMap" class="cycle-map"></div>
 
@@ -19275,6 +18848,181 @@ function toggleNews(){
     document.getElementById("back-to-quotes").style.display = "block";
     panel.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+
+const RSI_WORKER_URL = "https://hg-macro-fred.wubairan.workers.dev";
+const RSI_MONITOR_CONFIG = {
+    symbols: [
+        { id: "btcusd", name: "BTCUSD", tvSymbol: "BTCUSD" },
+        { id: "ukoil", name: "UKOIL", tvSymbol: "UKOIL" },
+        { id: "xauusd", name: "XAUUSD", tvSymbol: "XAUUSD" }
+    ],
+    timeframes: [
+        { id: "30m", label: "30分钟", interval: "30min" },
+        { id: "1h", label: "1小时", interval: "1h" },
+        { id: "4h", label: "4小时", interval: "4h" },
+        { id: "1d", label: "日线", interval: "1day" },
+        { id: "1w", label: "周线", interval: "1week" },
+        { id: "1M", label: "月线", interval: "1month" }
+    ],
+    oversoldThreshold: 30,
+    overboughtThreshold: 70,
+    resonanceCount: 3
+};
+let rsiMonitorData = {};
+let rsiMonitorInterval = null;
+
+function calculateRSI(closes, period = 14) {
+    if (!closes || closes.length < period + 1) return null;
+    let prevAvgGain = 0, prevAvgLoss = 0;
+    for (let i = 1; i <= period; i++) {
+        const change = closes[i] - closes[i - 1];
+        if (change > 0) prevAvgGain += change;
+        else prevAvgLoss += Math.abs(change);
+    }
+    prevAvgGain /= period;
+    prevAvgLoss /= period;
+    for (let i = period + 1; i < closes.length; i++) {
+        const change = closes[i] - closes[i - 1];
+        const gain = change > 0 ? change : 0;
+        const loss = change < 0 ? Math.abs(change) : 0;
+        prevAvgGain = (prevAvgGain * (period - 1) + gain) / period;
+        prevAvgLoss = (prevAvgLoss * (period - 1) + loss) / period;
+    }
+    if (prevAvgLoss === 0) return 100;
+    return 100 - (100 / (1 + prevAvgGain / prevAvgLoss));
+}
+
+async function fetchRsiFromWorker(symbol, interval) {
+    try {
+        const url = `${RSI_WORKER_URL}?endpoint=rsi&symbol=${symbol}&interval=${interval}`;
+        const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+        const data = await res.json();
+        if (data.status === "ok" && data.rsi != null) {
+            return { rsi: data.rsi, time: data.time };
+        }
+    } catch (err) {
+        console.error(`RSI fetch error for ${symbol}:`, err.message);
+    }
+    return null;
+}
+
+async function fetchRsiMonitorData() {
+    for (const symbol of RSI_MONITOR_CONFIG.symbols) {
+        const symbolData = {};
+        let lastUpdateTime = null;
+        for (const tf of RSI_MONITOR_CONFIG.timeframes) {
+            const result = await fetchRsiFromWorker(symbol.tvSymbol, tf.interval);
+            if (result) {
+                symbolData[tf.id] = result.rsi;
+                if (!lastUpdateTime) lastUpdateTime = result.time;
+                updateRsiDisplay(symbol.id, tf.id, result.rsi);
+            }
+        }
+        if (lastUpdateTime) {
+            const timeEl = document.getElementById(`${symbol.id}-time`);
+            if (timeEl) timeEl.textContent = lastUpdateTime;
+        }
+        rsiMonitorData[symbol.id] = symbolData;
+        checkRsiResonance(symbol.id, symbolData);
+    }
+}
+
+function updateRsiDisplay(symbolId, tfId, rsi) {
+    const el = document.getElementById(`${symbolId}-${tfId}`);
+    if (!el) return;
+    el.textContent = rsi != null ? rsi.toFixed(1) : "--";
+    el.classList.remove("oversold", "overbought", "neutral");
+    if (rsi != null) {
+        if (rsi <= RSI_MONITOR_CONFIG.oversoldThreshold) el.classList.add("oversold");
+        else if (rsi >= RSI_MONITOR_CONFIG.overboughtThreshold) el.classList.add("overbought");
+        else el.classList.add("neutral");
+    }
+}
+
+function checkRsiResonance(symbolId, data) {
+    const alertEl = document.getElementById(`${symbolId}-alert`);
+    if (!alertEl) return;
+    alertEl.className = "alert-badge";
+    alertEl.textContent = "";
+    const values = Object.values(data).filter(v => v != null);
+    if (values.length === 0) return;
+    const oversoldCount = values.filter(v => v <= RSI_MONITOR_CONFIG.oversoldThreshold).length;
+    const overboughtCount = values.filter(v => v >= RSI_MONITOR_CONFIG.overboughtThreshold).length;
+    if (oversoldCount >= RSI_MONITOR_CONFIG.resonanceCount) {
+        alertEl.classList.add("resonance");
+        alertEl.textContent = `超卖共振(${oversoldCount})`;
+    } else if (overboughtCount >= RSI_MONITOR_CONFIG.resonanceCount) {
+        alertEl.classList.add("resonance");
+        alertEl.textContent = `超买共振(${overboughtCount})`;
+    } else if (oversoldCount > 0) {
+        alertEl.classList.add("oversold");
+        alertEl.textContent = `超卖(${oversoldCount})`;
+    } else if (overboughtCount > 0) {
+        alertEl.classList.add("overbought");
+        alertEl.textContent = `超买(${overboughtCount})`;
+    }
+}
+
+function addCustomRsiSymbol() {
+    const input = document.getElementById("rsi-custom-symbol");
+    if (!input) return;
+    const symbol = input.value.trim().toUpperCase();
+    if (!symbol) return;
+    const symbolId = symbol.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (RSI_MONITOR_CONFIG.symbols.find(s => s.id === symbolId)) {
+        alert(`${symbol} 已在监控列表中`);
+        return;
+    }
+    RSI_MONITOR_CONFIG.symbols.push({ id: symbolId, name: symbol, tvSymbol: symbol });
+    const grid = document.getElementById("rsi-monitor-grid");
+    if (!grid) return;
+    const card = document.createElement("div");
+    card.className = "rsi-symbol-card";
+    card.id = `rsi-${symbolId}`;
+    let timeframesHtml = RSI_MONITOR_CONFIG.timeframes.map(tf => 
+        `<div class="rsi-timeframe-row"><span class="rsi-tf-label">${tf.label}</span><span class="rsi-tf-value" id="${symbolId}-${tf.id}">加载中...</span></div>`
+    ).join("");
+    card.innerHTML = `<div class="rsi-symbol-header"><span>${symbol}</span><span style="cursor:pointer;margin-left:auto;margin-right:6px;" onclick="removeRsiSymbol('${symbolId}')">✕</span><span class="alert-badge" id="${symbolId}-alert"></span></div>${timeframesHtml}<div class="rsi-update-time" id="${symbolId}-time">--</div>`;
+    grid.appendChild(card);
+    input.value = "";
+    fetchRsiForCustomSymbol(symbolId);
+}
+
+function removeRsiSymbol(symbolId) {
+    const card = document.getElementById(`rsi-${symbolId}`);
+    if (card) card.remove();
+    RSI_MONITOR_CONFIG.symbols = RSI_MONITOR_CONFIG.symbols.filter(s => s.id !== symbolId);
+    delete rsiMonitorData[symbolId];
+}
+
+async function fetchRsiForCustomSymbol(symbolId) {
+    const symbol = RSI_MONITOR_CONFIG.symbols.find(s => s.id === symbolId);
+    if (!symbol) return;
+    const symbolData = {};
+    let lastUpdateTime = null;
+    for (const tf of RSI_MONITOR_CONFIG.timeframes) {
+        const result = await fetchRsiFromWorker(symbol.tvSymbol, tf.interval);
+        if (result) {
+            symbolData[tf.id] = result.rsi;
+            if (!lastUpdateTime) lastUpdateTime = result.time;
+            updateRsiDisplay(symbol.id, tf.id, result.rsi);
+        } else {
+            const el = document.getElementById(`${symbolId}-${tf.id}`);
+            if (el) el.textContent = "无数据";
+        }
+    }
+    if (lastUpdateTime) {
+        const timeEl = document.getElementById(`${symbol.id}-time`);
+        if (timeEl) timeEl.textContent = lastUpdateTime;
+    }
+    rsiMonitorData[symbol.id] = symbolData;
+    checkRsiResonance(symbol.id, symbolData);
+}
+
+setTimeout(() => {
+    fetchRsiMonitorData();
+    rsiMonitorInterval = setInterval(fetchRsiMonitorData, 300000);
+}, 2000);
 <\/script>
 <script>
 (function () {
