@@ -9738,32 +9738,26 @@ function updateDashboard() {
     const titleEl = document.getElementById('dashboard-holiday-title');
     const infoEl = document.getElementById('dashboard-holiday-info');
     if (titleEl && infoEl) {
-        reminderLoadData();
-        if (!reminderData.length) reminderGenerateFromCRM();
-        const monthReminders = reminderData
-            .slice()
-            .sort((a, b) => a.daysLeft - b.daysLeft)
-            .slice(0, 3)
-            .map(item => `${item.date} ${item.title}`);
-        if (monthReminders.length) {
-            titleEl.innerText = '本月提醒';
-            infoEl.innerText = monthReminders.join(' | ');
-            return;
-        }
         const now = new Date();
         const year = now.getFullYear();
         const month = now.getMonth() + 1;
         const upcoming = [];
         const days = new Date(year, month, 0).getDate();
+        
         for (let d = now.getDate(); d <= days; d++) {
-            const holiday = getHolidayInfo(year, month, d);
             const market = getMarketClosures(year, month, d);
-            if (holiday) upcoming.push(`${month}/${d} ${holiday.name}`);
-            if (market.length) market.forEach(item => upcoming.push(`${month}/${d} ${item.label}`));
-            if (upcoming.length >= 3) break;
+            if (market.length) {
+                market.forEach(item => {
+                    if (item.label.includes('休市') || item.label.includes('早收') || item.label.includes('报') || item.label.includes('预告')) {
+                        upcoming.push(`${month}/${d} ${item.label}`);
+                    }
+                });
+            }
+            if (upcoming.length >= 5) break;
         }
-        titleEl.innerText = upcoming.length ? '本月节假/休市' : '本月平稳';
-        infoEl.innerText = upcoming.length ? upcoming.join(' | ') : '本月暂无更多提醒';
+        
+        titleEl.innerText = upcoming.length ? '本月财报/休市' : '本月平稳';
+        infoEl.innerText = upcoming.length ? upcoming.join(' | ') : '本月暂无财报披露或休市安排';
     }
 }
 
