@@ -9738,26 +9738,42 @@ function updateDashboard() {
     const titleEl = document.getElementById('dashboard-holiday-title');
     const infoEl = document.getElementById('dashboard-holiday-info');
     if (titleEl && infoEl) {
+        reminderLoadData();
+        if (!reminderData.length) reminderGenerateFromCRM();
+        
         const now = new Date();
         const year = now.getFullYear();
         const month = now.getMonth() + 1;
-        const upcoming = [];
-        const days = new Date(year, month, 0).getDate();
+        const allReminders = [];
         
-        for (let d = now.getDate(); d <= days; d++) {
+        // 添加CRM订单提醒
+        const crmReminders = reminderData
+            .slice()
+            .sort((a, b) => a.daysLeft - b.daysLeft)
+            .slice(0, 3)
+            .map(item => `${item.date} ${item.title}`);
+        allReminders.push(...crmReminders);
+        
+        // 添加财报和休市提醒
+        const days = new Date(year, month, 0).getDate();
+        for (let d = now.getDate(); d <= days && allReminders.length < 5; d++) {
             const market = getMarketClosures(year, month, d);
             if (market.length) {
                 market.forEach(item => {
-                    if (item.label.includes('休市') || item.label.includes('早收') || item.label.includes('报') || item.label.includes('预告')) {
-                        upcoming.push(`${month}/${d} ${item.label}`);
+                    if (allReminders.length < 5 && (item.label.includes('休市') || item.label.includes('早收') || item.label.includes('报') || item.label.includes('预告'))) {
+                        allReminders.push(`${month}/${d} ${item.label}`);
                     }
                 });
             }
-            if (upcoming.length >= 5) break;
         }
         
-        titleEl.innerText = upcoming.length ? '本月财报/休市' : '本月平稳';
-        infoEl.innerText = upcoming.length ? upcoming.join(' | ') : '本月暂无财报披露或休市安排';
+        if (allReminders.length) {
+            titleEl.innerText = '本月提醒';
+            infoEl.innerText = allReminders.join(' | ');
+        } else {
+            titleEl.innerText = '本月平稳';
+            infoEl.innerText = '本月暂无更多提醒';
+        }
     }
 }
 
