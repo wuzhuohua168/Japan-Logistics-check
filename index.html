@@ -10432,6 +10432,16 @@ function crmLoad() {
             if (!fixed.statusHistory) {
                 fixed.statusHistory = [];
             }
+            // 修复tags字段：确保始终是数组
+            if (!fixed.tags) {
+                fixed.tags = [];
+            } else if (typeof fixed.tags === 'string') {
+                // 如果tags是字符串，转换为数组
+                fixed.tags = fixed.tags.split(',').map(t => t.trim()).filter(t => t);
+            } else if (!Array.isArray(fixed.tags)) {
+                // 如果tags既不是字符串也不是数组，设为空数组
+                fixed.tags = [];
+            }
             return fixed;
         });
     } catch(e) { return []; }
@@ -10495,6 +10505,7 @@ function crmAutoSync() {
             carrierType: r.carrierType || '',
             status: r.status || '',
             incoterm: r.incoterm || '',
+            tags: r.tags || [],
             notes: r.notes || '',
             fees: r.fees || null,
             costs: r.costs || null,
@@ -10826,6 +10837,7 @@ function crmExportTracking() {
             status: r.status || '',
             settlementStatus: r.settlementStatus || '未结算',
             incoterm: r.incoterm || '',
+            tags: r.tags || [],
             notes: r.notes || '',
             fees: r.fees || null,
             costs: r.costs || null,
@@ -15691,6 +15703,15 @@ function silentSyncFromCloud(apiUrl, apiKey) {
                 let hasChanges = false;
                 
                 data.orders.forEach(serverOrder => {
+                    // 修复serverOrder的tags字段
+                    if (!serverOrder.tags) {
+                        serverOrder.tags = [];
+                    } else if (typeof serverOrder.tags === 'string') {
+                        serverOrder.tags = serverOrder.tags.split(',').map(t => t.trim()).filter(t => t);
+                    } else if (!Array.isArray(serverOrder.tags)) {
+                        serverOrder.tags = [];
+                    }
+                    
                     const localOrder = localOrderMap.get(String(serverOrder.id));
                     if (!localOrder) {
                         localOrders.push(serverOrder);
