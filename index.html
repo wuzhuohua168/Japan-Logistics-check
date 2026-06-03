@@ -9754,13 +9754,24 @@ function updateDashboard() {
             .map(item => `${item.date} ${item.title}`);
         allReminders.push(...crmReminders);
         
-        // 添加财报和休市提醒
+        // 添加本月财报季提醒（整个月都显示）
+        const usEarningsWindows = {
+            1: '美股Q4财报季', 2: '美股Q4财报季', 3: '美股Q4财报季',
+            4: '美股Q1财报季', 5: '美股Q1财报季', 6: '美股Q1财报季',
+            7: '美股Q2财报季', 8: '美股Q2财报季', 9: '美股Q2财报季',
+            10: '美股Q3财报季', 11: '美股Q3财报季', 12: '美股Q3财报季'
+        };
+        if (usEarningsWindows[month] && allReminders.length < 5) {
+            allReminders.push(`全月 ${usEarningsWindows[month]}`);
+        }
+        
+        // 添加休市提醒
         const days = new Date(year, month, 0).getDate();
         for (let d = now.getDate(); d <= days && allReminders.length < 5; d++) {
             const market = getMarketClosures(year, month, d);
             if (market.length) {
                 market.forEach(item => {
-                    if (allReminders.length < 5 && (item.label.includes('休市') || item.label.includes('早收') || item.label.includes('报') || item.label.includes('预告'))) {
+                    if (allReminders.length < 5 && (item.label.includes('休市') || item.label.includes('早收'))) {
                         allReminders.push(`${month}/${d} ${item.label}`);
                     }
                 });
